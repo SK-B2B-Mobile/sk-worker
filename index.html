@@ -355,7 +355,7 @@ function tOpts(sel) {
 // ══════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════
-const S = { me:null, tab:'mine', jobs:[], pickers:FB_PICK, colors:{}, timer:null, elTimer:null, searchQuery:'' };
+const S = { me:null, tab:'mine', jobs:[], pickers:FB_PICK, colors:{}, timer:null, elTimer:null, searchQuery:'', openCards:new Set() };
 const $ = id => document.getElementById(id);
 function ov(show, msg) {
   var el = document.getElementById('ov');
@@ -492,6 +492,7 @@ const App = {
   tab(t) {
     S.tab = t;
     S.searchQuery = '';
+    S.openCards.clear();
     try { $('searchInput').value = ''; $('searchClear').style.display='none'; $('searchCount').textContent=''; } catch(e){}
     ['mine','all','done'].forEach(x => {
       $('t'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('on', x===t);
@@ -558,6 +559,11 @@ const App = {
       return;
     }
     el.innerHTML = f.map(j => this.card(j)).join('');
+    // 새로고침 후 이전에 열려있던 카드 상태 복원
+    S.openCards.forEach(inv => {
+      const card = document.getElementById('card-' + inv);
+      if (card) card.classList.add('open');
+    });
   },
 
   card(job) {
@@ -645,7 +651,14 @@ const App = {
 
   toggleCard(inv) {
     const card = document.getElementById('card-' + inv);
-    if (card) card.classList.toggle('open');
+    if (card) {
+      card.classList.toggle('open');
+      if (card.classList.contains('open')) {
+        S.openCards.add(inv);
+      } else {
+        S.openCards.delete(inv);
+      }
+    }
   },
 
   async setPicker(inv, picker) {
