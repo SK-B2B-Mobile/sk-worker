@@ -15,39 +15,137 @@
       --muted:#4d6080; --sub:#7a93b8; --text:#d8e8ff; --white:#ffffff;
       --st:env(safe-area-inset-top,44px); --sb:env(safe-area-inset-bottom,20px);
     }
-    html,body { width:100%; height:100%; background:var(--bg); color:#d8e8ff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing:antialiased; overscroll-behavior:none; }
-    .page { position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg); transition:opacity .2s; }
-    .page.off { opacity:0; pointer-events:none; }
+    html, body {
+      width:100%; height:100%;
+      background:#07101f;
+      color:#d8e8ff;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+      -webkit-font-smoothing:antialiased;
+      overscroll-behavior:none;
+      /* ★ iOS 검정화면 방지 */
+      -webkit-overflow-scrolling:touch;
+    }
+
+    /* ★ inset:0 → top/left/right/bottom으로 변경 (구형 iOS 호환) */
+    .page {
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      display:-webkit-flex;
+      display:flex;
+      -webkit-flex-direction:column;
+      flex-direction:column;
+      background:#07101f;
+      /* ★ visibility 사용 (opacity만 쓰면 iOS에서 렌더링 버그) */
+      -webkit-transition:opacity .2s;
+      transition:opacity .2s;
+    }
+    .page.off {
+      opacity:0;
+      pointer-events:none;
+      /* ★ iOS에서 visibility:hidden 추가로 완전히 숨김 */
+      visibility:hidden;
+    }
+    .page.on {
+      opacity:1;
+      pointer-events:auto;
+      visibility:visible;
+    }
 
     /* OVERLAY */
-    #ov { position:fixed; inset:0; background:rgba(7,16,31,.96); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:9999; transition:opacity .3s; }
-    #ov.off { opacity:0; pointer-events:none; }
-    .ring { width:48px; height:48px; border:3px solid rgba(255,255,255,.1); border-top-color:var(--cyan); border-radius:50%; animation:spin .75s linear infinite; }
-    .ring-txt { font-size:13px; color:var(--sub); font-weight:600; letter-spacing:.5px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    #ov {
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background:rgba(7,16,31,.96);
+      display:-webkit-flex;
+      display:flex;
+      -webkit-flex-direction:column;
+      flex-direction:column;
+      -webkit-align-items:center;
+      align-items:center;
+      -webkit-justify-content:center;
+      justify-content:center;
+      gap:16px;
+      z-index:9999;
+    }
+    .ring { width:48px; height:48px; border:3px solid rgba(255,255,255,.1); border-top-color:#00d4ff; border-radius:50%; -webkit-animation:spin .75s linear infinite; animation:spin .75s linear infinite; }
+    .ring-txt { font-size:13px; color:#7a93b8; font-weight:600; letter-spacing:.5px; }
+    @-webkit-keyframes spin { to { -webkit-transform:rotate(360deg); transform:rotate(360deg); } }
+    @keyframes spin { to { -webkit-transform:rotate(360deg); transform:rotate(360deg); } }
 
     /* TOAST */
-    #toast { font-size:15px !important; position:fixed; left:50%; bottom:calc(var(--sb) + 68px); transform:translateX(-50%) translateY(48px); padding:11px 24px; background:var(--card2); border:1px solid var(--line); border-radius:999px; font-size:14px; font-weight:600; white-space:nowrap; z-index:9998; pointer-events:none; transition:transform .32s cubic-bezier(.34,1.56,.64,1); box-shadow:0 8px 28px rgba(0,0,0,.5); }
-    #toast.show { transform:translateX(-50%) translateY(0); }
-    #toast.ok { color:var(--green); border-color:rgba(0,230,118,.35); }
-    #toast.err { color:var(--red); border-color:rgba(255,77,109,.35); }
+    #toast {
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom, 20px) + 68px);
+      -webkit-transform:translateX(-50%) translateY(48px);
+      transform:translateX(-50%) translateY(48px);
+      padding:11px 24px;
+      background:#111f35;
+      border:1px solid #1a2d48;
+      border-radius:999px;
+      font-size:14px;
+      font-weight:600;
+      white-space:nowrap;
+      z-index:9998;
+      pointer-events:none;
+      -webkit-transition:-webkit-transform .32s cubic-bezier(.34,1.56,.64,1);
+      transition:transform .32s cubic-bezier(.34,1.56,.64,1);
+      box-shadow:0 8px 28px rgba(0,0,0,.5);
+    }
+    #toast.show { -webkit-transform:translateX(-50%) translateY(0); transform:translateX(-50%) translateY(0); }
+    #toast.ok { color:#00e676; border-color:rgba(0,230,118,.35); }
+    #toast.err { color:#ff4d6d; border-color:rgba(255,77,109,.35); }
 
     /* LOGIN */
-    #pgLogin { overflow-y:auto; -webkit-overflow-scrolling:touch; padding:calc(var(--st) + 40px) 20px calc(var(--sb) + 28px); align-items:center; }
-    .brand-tag { font-size:12px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
-    .brand-h { font-size:40px; font-weight:900; line-height:1; text-align:center; margin-bottom:7px; background:linear-gradient(135deg,#fff 25%,var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .brand-sub { font-size:15px; color:var(--sub); margin-bottom:44px; }
-    .sec-lbl { width:100%; max-width:440px; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
-    /* 상태 갱신 시간 표시 */
-    .status-refresh-info { width:100%; max-width:440px; font-size:11px; color:var(--muted); text-align:right; margin-bottom:6px; }
-    .pgrid { width:100%; max-width:440px; display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
-    .pc { display:flex; flex-direction:column; align-items:center; gap:10px; padding:18px 14px; background:var(--card); border:2px solid var(--line); border-radius:16px; cursor:pointer; transition:border-color .15s,background .15s,box-shadow .15s; position:relative; }
-    .pc.sel { border-color:var(--cyan); background:rgba(0,212,255,.07); box-shadow:0 0 0 1px var(--cyan),0 6px 22px rgba(0,212,255,.2); }
-    .pc-dot { width:14px; height:14px; border-radius:50%; background:var(--muted); flex-shrink:0; transition:background .3s,box-shadow .3s; }
-    .pc.sel .pc-dot { background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
-    /* 상태 표시 dot */
-    .pc-status { position:absolute; top:10px; right:10px; width:11px; height:11px; border-radius:50%; border:2px solid var(--card2); }
-    .pc-status.working  { background:#00d4ff; box-shadow:0 0 7px #00d4ff; animation:blink 1.5s infinite; }
+    #pgLogin {
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      padding:calc(env(safe-area-inset-top, 44px) + 40px) 20px calc(env(safe-area-inset-bottom, 20px) + 28px);
+      -webkit-align-items:center;
+      align-items:center;
+    }
+    .brand-tag { font-size:12px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#4d6080; margin-bottom:8px; }
+    .brand-h {
+      font-size:40px; font-weight:900; line-height:1; text-align:center; margin-bottom:7px;
+      background:-webkit-linear-gradient(135deg,#fff 25%,#00d4ff);
+      background:linear-gradient(135deg,#fff 25%,#00d4ff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .brand-sub { font-size:15px; color:#7a93b8; margin-bottom:44px; }
+    .sec-lbl { width:100%; max-width:440px; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#4d6080; margin-bottom:14px; }
+    .status-refresh-info { width:100%; max-width:440px; font-size:11px; color:#4d6080; text-align:right; margin-bottom:6px; }
+    .pgrid { width:100%; max-width:440px; display:-webkit-flex; display:flex; -webkit-flex-wrap:wrap; flex-wrap:wrap; gap:10px; margin-bottom:28px; }
+    /* ★ grid → flex로 변경 (iOS 9 호환) */
+    .pc {
+      width:calc(50% - 5px);
+      display:-webkit-flex;
+      display:flex;
+      -webkit-flex-direction:column;
+      flex-direction:column;
+      -webkit-align-items:center;
+      align-items:center;
+      gap:10px;
+      padding:18px 14px;
+      background:#0d1a2d;
+      border:2px solid #1a2d48;
+      border-radius:16px;
+      cursor:pointer;
+      -webkit-transition:border-color .15s,background .15s,box-shadow .15s;
+      transition:border-color .15s,background .15s,box-shadow .15s;
+      position:relative;
+      /* ★ button 기본 스타일 제거 (iOS) */
+      -webkit-appearance:none;
+      appearance:none;
+      text-align:center;
+      box-sizing:border-box;
+    }
+    .pc.sel { border-color:#00d4ff; background:rgba(0,212,255,.07); box-shadow:0 0 0 1px #00d4ff,0 6px 22px rgba(0,212,255,.2); }
+    .pc-dot { width:14px; height:14px; border-radius:50%; background:#4d6080; -webkit-flex-shrink:0; flex-shrink:0; -webkit-transition:background .3s,box-shadow .3s; transition:background .3s,box-shadow .3s; }
+    .pc.sel .pc-dot { background:#00d4ff; box-shadow:0 0 8px #00d4ff; }
+    .pc-status { position:absolute; top:10px; right:10px; width:11px; height:11px; border-radius:50%; border:2px solid #111f35; }
+    .pc-status.working  { background:#00d4ff; box-shadow:0 0 7px #00d4ff; -webkit-animation:blink 1.5s infinite; animation:blink 1.5s infinite; }
     .pc-status.idle     { background:#ffab00; box-shadow:0 0 7px #ffab00; }
     .pc-status.offline  { background:#ff4d6d; box-shadow:0 0 5px #ff4d6d; }
     .pc-status-label { font-size:10px; font-weight:700; letter-spacing:.3px; margin-top:-4px; }
@@ -56,100 +154,110 @@
     .pc-status-label.offline { color:#ff4d6d; }
     .pc-name { font-size:16px; font-weight:700; text-align:center; line-height:1.3; color:#d8e8ff; word-break:break-word; }
     .pc.sel .pc-name { color:#ffffff; }
-    .go-btn { width:100%; max-width:440px; padding:18px; background:var(--cyan); color:#000; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:18px; font-weight:800; border:none; border-radius:14px; cursor:pointer; letter-spacing:.5px; box-shadow:0 8px 28px rgba(0,212,255,.35); transition:transform .1s,box-shadow .1s; }
-    .go-btn:active { transform:scale(.97); box-shadow:0 4px 14px rgba(0,212,255,.25); }
+    .go-btn {
+      width:100%; max-width:440px; padding:18px;
+      background:#00d4ff; color:#000;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+      font-size:18px; font-weight:800; border:none; border-radius:14px; cursor:pointer;
+      letter-spacing:.5px; box-shadow:0 8px 28px rgba(0,212,255,.35);
+      -webkit-transition:-webkit-transform .1s,box-shadow .1s;
+      transition:transform .1s,box-shadow .1s;
+      -webkit-appearance:none; appearance:none;
+    }
+    .go-btn:active { -webkit-transform:scale(.97); transform:scale(.97); box-shadow:0 4px 14px rgba(0,212,255,.25); }
     .go-btn:disabled { opacity:.3; pointer-events:none; box-shadow:none; }
 
     /* MAIN */
     #pgMain { overflow:hidden; }
-    .topbar { flex-shrink:0; background:var(--card); border-bottom:1px solid var(--line); padding:calc(var(--st) + 10px) 16px 12px; }
-    .top-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-    .top-id { display:flex; align-items:center; gap:10px; }
-    .top-av { width:36px; height:36px; border-radius:50%; background:rgba(0,212,255,.12); border:2px solid var(--cyan); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:var(--cyan); flex-shrink:0; }
+    .topbar {
+      -webkit-flex-shrink:0; flex-shrink:0;
+      background:#0d1a2d; border-bottom:1px solid #1a2d48;
+      padding:calc(env(safe-area-inset-top, 44px) + 10px) 16px 12px;
+    }
+    .top-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; margin-bottom:12px; }
+    .top-id { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:10px; }
+    .top-av { width:36px; height:36px; border-radius:50%; background:rgba(0,212,255,.12); border:2px solid #00d4ff; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; font-size:12px; font-weight:800; color:#00d4ff; -webkit-flex-shrink:0; flex-shrink:0; }
     .top-name { font-size:18px; font-weight:700; }
-    .top-role { font-size:13px; color:var(--sub); }
-    .out-btn { padding:9px 15px; background:var(--card2); border:1px solid var(--line); border-radius:999px; color:var(--sub); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
-    .tabs { display:flex; gap:4px; background:rgba(0,0,0,.25); border-radius:12px; padding:4px; }
-    .tab { flex:1; padding:8px 4px; border:none; border-radius:9px; background:transparent; color:var(--sub); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:14px; font-weight:600; cursor:pointer; position:relative; transition:background .15s,color .15s; }
-    .tab.on { background:var(--cyan); color:#000; }
-    .tbadge { position:absolute; top:3px; right:5px; background:var(--red); color:#fff; font-size:9px; font-weight:800; border-radius:999px; padding:1px 4px; min-width:14px; }
-    .kpi-row { flex-shrink:0; display:flex; gap:1px; background:var(--line); border-bottom:1px solid var(--line); }
-    .kpi-c { flex:1; padding:10px 4px; background:var(--card); text-align:center; }
-    .kpi-n { font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:20px; font-weight:600; color:var(--cyan); line-height:1; }
-    .kpi-l { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--sub); margin-top:3px; }
-    .jlist { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:10px 14px 80px; display:flex; flex-direction:column; gap:12px; }
+    .top-role { font-size:13px; color:#7a93b8; }
+    .out-btn { padding:9px 15px; background:#111f35; border:1px solid #1a2d48; border-radius:999px; color:#7a93b8; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; -webkit-appearance:none; appearance:none; }
+    .tabs { display:-webkit-flex; display:flex; gap:4px; background:rgba(0,0,0,.25); border-radius:12px; padding:4px; }
+    .tab { -webkit-flex:1; flex:1; padding:8px 4px; border:none; border-radius:9px; background:transparent; color:#7a93b8; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:14px; font-weight:600; cursor:pointer; position:relative; -webkit-transition:background .15s,color .15s; transition:background .15s,color .15s; -webkit-appearance:none; appearance:none; }
+    .tab.on { background:#00d4ff; color:#000; }
+    .tbadge { position:absolute; top:3px; right:5px; background:#ff4d6d; color:#fff; font-size:9px; font-weight:800; border-radius:999px; padding:1px 4px; min-width:14px; }
+    .kpi-row { -webkit-flex-shrink:0; flex-shrink:0; display:-webkit-flex; display:flex; gap:1px; background:#1a2d48; border-bottom:1px solid #1a2d48; }
+    .kpi-c { -webkit-flex:1; flex:1; padding:10px 4px; background:#0d1a2d; text-align:center; }
+    .kpi-n { font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:20px; font-weight:600; color:#00d4ff; line-height:1; }
+    .kpi-l { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#7a93b8; margin-top:3px; }
+    .jlist { -webkit-flex:1; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:10px 14px 80px; display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; gap:12px; }
     .jlist::-webkit-scrollbar { display:none; }
-    .jcard { display:block; background:var(--card); border:1px solid var(--line); border-radius:18px; width:100%; box-sizing:border-box; }
+    .jcard { display:block; background:#0d1a2d; border:1px solid #1a2d48; border-radius:18px; width:100%; box-sizing:border-box; }
     .jcard.st-ready { border-color:rgba(0,230,118,.35); }
     .jcard.st-started { border-color:rgba(255,171,0,.45); }
     .jcard.st-completed { border-color:rgba(0,212,255,.35); }
     .jcard.mine { border-color:rgba(0,212,255,.45); }
-    .jch { padding:13px 14px 8px; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .jch { padding:13px 14px 8px; display:-webkit-flex; display:flex; -webkit-align-items:flex-start; align-items:flex-start; -webkit-justify-content:space-between; justify-content:space-between; gap:8px; cursor:pointer; }
     .jinv { font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:14px; font-weight:600; color:#ffffff; }
-    .jrem { font-size:14px; color:var(--sub); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
-    .pill { flex-shrink:0; padding:4px 11px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
-    .p-idle { background:rgba(77,96,128,.2); color:var(--sub); }
-    .p-ready { background:rgba(0,230,118,.12); color:var(--green); border:1px solid rgba(0,230,118,.3); }
-    .p-started { background:rgba(255,171,0,.12); color:var(--amber); border:1px solid rgba(255,171,0,.3); }
-    .p-completed { background:rgba(0,212,255,.12); color:var(--cyan); border:1px solid rgba(0,212,255,.3); }
-    .jmeta { padding:4px 14px 10px; display:flex; gap:14px; flex-wrap:wrap; }
-    .mi { display:flex; flex-direction:column; gap:1px; }
-    .ml { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--sub); }
-    .mv { font-size:15px; font-weight:600; color:var(--white); font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; }
-    .mv.hi { color:var(--cyan); }
-    .prow { padding:10px 14px; border-top:1px solid rgba(26,45,72,1); display:flex; align-items:center; gap:8px; }
-    .plbl { font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--sub); flex-shrink:0; width:46px; }
-    .psel { flex:1; padding:10px 12px; background:var(--card2); border:1px solid var(--line); border-radius:10px; color:var(--white); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:600; -webkit-appearance:none; }
-    .ptag { display:inline-flex; align-items:center; padding:8px 14px; border-radius:10px; font-size:15px; font-weight:700; }
-    .trow { padding:10px 14px; border-top:1px solid rgba(26,45,72,1); display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .tbl { display:flex; flex-direction:column; gap:4px; }
-    .tlbl { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--sub); }
-    .tsel { padding:11px 12px; background:var(--card2); border:1px solid var(--line); border-radius:10px; color:var(--white); font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:15px; font-weight:600; width:100%; -webkit-appearance:none; }
-    .tdis { padding:11px 12px; background:var(--card2); border:1px solid var(--line); border-radius:10px; font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:13px; font-weight:600; color:var(--cyan); }
-    .ebar { padding:7px 14px; background:rgba(255,171,0,.1); border-top:1px solid rgba(255,171,0,.2); display:flex; align-items:center; justify-content:space-between; }
-    .elbl { font-size:10px; font-weight:700; color:var(--amber); letter-spacing:1px; text-transform:uppercase; }
-    .eval { font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:14px; font-weight:700; color:var(--amber); }
-    .arow { padding:10px 14px 14px; border-top:1px solid rgba(26,45,72,1); display:flex; gap:8px; }
-    .ab { flex:1; padding:15px 8px; border:none; border-radius:14px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:800; cursor:pointer; transition:transform .12s; }
-    .ab:active { transform:scale(.96); }
+    .jrem { font-size:14px; color:#7a93b8; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
+    .pill { -webkit-flex-shrink:0; flex-shrink:0; padding:4px 11px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+    .p-idle { background:rgba(77,96,128,.2); color:#7a93b8; }
+    .p-ready { background:rgba(0,230,118,.12); color:#00e676; border:1px solid rgba(0,230,118,.3); }
+    .p-started { background:rgba(255,171,0,.12); color:#ffab00; border:1px solid rgba(255,171,0,.3); }
+    .p-completed { background:rgba(0,212,255,.12); color:#00d4ff; border:1px solid rgba(0,212,255,.3); }
+    .prow { padding:10px 14px; border-top:1px solid rgba(26,45,72,1); display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:8px; }
+    .plbl { font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#7a93b8; -webkit-flex-shrink:0; flex-shrink:0; width:46px; }
+    .psel { -webkit-flex:1; flex:1; padding:10px 12px; background:#111f35; border:1px solid #1a2d48; border-radius:10px; color:#ffffff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:600; -webkit-appearance:none; appearance:none; }
+    .ptag { display:-webkit-inline-flex; display:inline-flex; -webkit-align-items:center; align-items:center; padding:8px 14px; border-radius:10px; font-size:15px; font-weight:700; }
+    .trow { padding:10px 14px; border-top:1px solid rgba(26,45,72,1); display:-webkit-flex; display:flex; gap:8px; }
+    .tbl { display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; -webkit-flex:1; flex:1; gap:4px; }
+    .tlbl { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#7a93b8; }
+    .tsel { padding:11px 12px; background:#111f35; border:1px solid #1a2d48; border-radius:10px; color:#ffffff; font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:15px; font-weight:600; width:100%; -webkit-appearance:none; appearance:none; }
+    .tdis { padding:11px 12px; background:#111f35; border:1px solid #1a2d48; border-radius:10px; font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:13px; font-weight:600; color:#00d4ff; }
+    .ebar { padding:7px 14px; background:rgba(255,171,0,.1); border-top:1px solid rgba(255,171,0,.2); display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; }
+    .elbl { font-size:10px; font-weight:700; color:#ffab00; letter-spacing:1px; text-transform:uppercase; }
+    .eval { font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:14px; font-weight:700; color:#ffab00; }
+    .arow { padding:10px 14px 14px; border-top:1px solid rgba(26,45,72,1); display:-webkit-flex; display:flex; gap:8px; }
+    .ab { -webkit-flex:1; flex:1; padding:15px 8px; border:none; border-radius:14px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:800; cursor:pointer; -webkit-transition:-webkit-transform .12s; transition:transform .12s; -webkit-appearance:none; appearance:none; }
+    .ab:active { -webkit-transform:scale(.96); transform:scale(.96); }
     .ab:disabled { opacity:.3; pointer-events:none; }
-    .ab-start { background:var(--amber); color:#000; box-shadow:0 4px 16px rgba(255,171,0,.3); }
-    .ab-done { background:var(--green); color:#000; box-shadow:0 4px 16px rgba(0,230,118,.3); }
-    .ab-comp { background:rgba(0,212,255,.12); color:var(--cyan); border:1px solid rgba(0,212,255,.3); }
-    .empty { padding:50px 24px; text-align:center; color:var(--sub); }
+    .ab-start { background:#ffab00; color:#000; box-shadow:0 4px 16px rgba(255,171,0,.3); }
+    .ab-done { background:#00e676; color:#000; box-shadow:0 4px 16px rgba(0,230,118,.3); }
+    .ab-comp { background:rgba(0,212,255,.12); color:#00d4ff; border:1px solid rgba(0,212,255,.3); }
+    .empty { padding:50px 24px; text-align:center; color:#7a93b8; }
     .eico { font-size:48px; margin-bottom:14px; }
-    .etit { font-size:17px; font-weight:700; color:var(--white); margin-bottom:8px; }
+    .etit { font-size:17px; font-weight:700; color:#ffffff; margin-bottom:8px; }
     .esub { font-size:13px; line-height:1.5; }
-    .btm { flex-shrink:0; padding:10px 16px calc(var(--sb) + 10px); background:var(--card); border-top:1px solid var(--line); display:flex; align-items:center; justify-content:center; gap:12px; }
-    .syn-dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; animation:blink 2s infinite; }
-    .syn-dot.busy { background:var(--amber); animation:spin .8s linear infinite; border-radius:50% 50% 0 50%; }
-    .syn-dot.err { background:var(--red); animation:none; }
+    .btm { -webkit-flex-shrink:0; flex-shrink:0; padding:10px 16px calc(env(safe-area-inset-bottom, 20px) + 10px); background:#0d1a2d; border-top:1px solid #1a2d48; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:12px; }
+    .syn-dot { width:7px; height:7px; border-radius:50%; background:#00e676; -webkit-flex-shrink:0; flex-shrink:0; -webkit-animation:blink 2s infinite; animation:blink 2s infinite; }
+    .syn-dot.busy { background:#ffab00; -webkit-animation:spin .8s linear infinite; animation:spin .8s linear infinite; border-radius:50% 50% 0 50%; }
+    .syn-dot.err { background:#ff4d6d; -webkit-animation:none; animation:none; }
+    @-webkit-keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-    .syn-txt { font-size:14px; color:var(--sub); }
-    .ref-btn { background:none; border:none; color:var(--cyan); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:15px; font-weight:700; cursor:pointer; padding:0; }
-    .dur-bar { padding:10px 16px; background:rgba(0,212,255,.06); border-top:1px solid rgba(0,212,255,.15); display:flex; align-items:center; justify-content:space-between; }
-    .dur-lbl { font-size:12px; font-weight:700; color:var(--cyan); letter-spacing:.5px; text-transform:uppercase; }
-    .dur-val { font-family:'SF Mono',Consolas,monospace; font-size:18px; font-weight:700; color:var(--cyan); }
-    .search-bar { padding:10px 14px; background:var(--card); border-bottom:1px solid var(--line); }
-    .search-input { width:100%; padding:11px 16px 11px 40px; background:var(--card2); border:1.5px solid var(--line); border-radius:12px; color:#fff; font-size:15px; font-family:-apple-system,sans-serif; outline:none; box-sizing:border-box; }
-    .search-input:focus { border-color:var(--cyan); }
-    .search-input::placeholder { color:var(--muted); }
+    .syn-txt { font-size:14px; color:#7a93b8; }
+    .ref-btn { background:none; border:none; color:#00d4ff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:15px; font-weight:700; cursor:pointer; padding:0; -webkit-appearance:none; appearance:none; }
+    .dur-bar { padding:10px 16px; background:rgba(0,212,255,.06); border-top:1px solid rgba(0,212,255,.15); display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; }
+    .dur-lbl { font-size:12px; font-weight:700; color:#00d4ff; letter-spacing:.5px; text-transform:uppercase; }
+    .dur-val { font-family:'SF Mono',Consolas,monospace; font-size:18px; font-weight:700; color:#00d4ff; }
+    .search-bar { padding:10px 14px; background:#0d1a2d; border-bottom:1px solid #1a2d48; }
+    .search-input { width:100%; padding:11px 16px 11px 40px; background:#111f35; border:1.5px solid #1a2d48; border-radius:12px; color:#fff; font-size:15px; font-family:-apple-system,sans-serif; outline:none; box-sizing:border-box; -webkit-appearance:none; appearance:none; }
+    .search-input:focus { border-color:#00d4ff; }
+    .search-input::-webkit-input-placeholder { color:#4d6080; }
+    .search-input::placeholder { color:#4d6080; }
     .search-wrap { position:relative; }
-    .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:16px; color:var(--muted); pointer-events:none; }
-    .search-clear { position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--muted); cursor:pointer; display:none; }
-    .search-result-count { font-size:11px; color:var(--sub); margin-top:6px; padding-left:2px; }
+    .search-icon { position:absolute; left:13px; top:50%; -webkit-transform:translateY(-50%); transform:translateY(-50%); font-size:16px; color:#4d6080; pointer-events:none; }
+    .search-clear { position:absolute; right:12px; top:50%; -webkit-transform:translateY(-50%); transform:translateY(-50%); font-size:18px; color:#4d6080; cursor:pointer; display:none; }
+    .search-result-count { font-size:11px; color:#7a93b8; margin-top:6px; padding-left:2px; }
     .jcard-body { display:none; }
     .jcard.open .jcard-body { display:block; }
-    .jch { cursor:pointer; }
-    .expand-icon { font-size:18px; color:var(--sub); transition:transform .2s; flex-shrink:0; }
-    .jcard.open .expand-icon { transform:rotate(180deg); color:var(--cyan); }
+    .expand-icon { font-size:18px; color:#7a93b8; -webkit-transition:-webkit-transform .2s; transition:transform .2s; -webkit-flex-shrink:0; flex-shrink:0; }
+    .jcard.open .expand-icon { -webkit-transform:rotate(180deg); transform:rotate(180deg); color:#00d4ff; }
   </style>
 </head>
 <body>
 
-<div id="ov" style="display:none">
+<!-- ★ 오버레이: 처음부터 숨김 처리 -->
+<div id="ov" style="display:none;">
   <div class="ring"></div>
-  <div class="ring-txt" id="ovTxt">Connecting...</div>
+  <div class="ring-txt" id="ovTxt">Loading...</div>
 </div>
 <div id="toast"></div>
 
@@ -157,7 +265,7 @@
 <div class="page off" id="pgLogin">
   <div class="brand-tag">StyleKorean</div>
   <div class="brand-h">B2B Fulfillment</div>
-  <div class="brand-sub">Worker Portal · v5.1</div>
+  <div class="brand-sub">Worker Portal · v5.2</div>
   <div class="sec-lbl">Select Your Name</div>
   <div class="status-refresh-info" id="statusRefreshInfo">Checking status...</div>
   <div class="pgrid" id="pgrid"></div>
@@ -192,7 +300,7 @@
   <div class="search-bar" id="searchBar" style="display:none">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input class="search-input" id="searchInput" type="text" placeholder="Search invoice #, remarks, picker name..."
+      <input class="search-input" id="searchInput" type="text" placeholder="Search invoice #, remarks, picker..."
              oninput="App.onSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
       <span class="search-clear" id="searchClear" onclick="App.clearSearch()">✕</span>
     </div>
@@ -207,684 +315,746 @@
 </div>
 
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbykK9DWjem9ORHxfR_mpdZl5DVh-en0D6JpCdIuel305QmfqxoNU_NqSnjkhFk401hI/exec';
-const FB_PICK = ['Ryan','Jane','Henry','Nicole'];
-const TIMEOUT = 20000;
+// ★ iOS 안전: 즉시 실행 - 페이지가 검정으로 남지 않도록
+(function() {
+  try {
+    // 100ms 안에 pgLogin이 표시되도록 보장
+    setTimeout(function() {
+      var login = document.getElementById('pgLogin');
+      var main  = document.getElementById('pgMain');
+      if (login) {
+        login.classList.remove('off');
+        login.classList.add('on');
+        login.style.cssText = 'opacity:1;visibility:visible;pointer-events:auto;';
+      }
+      if (main) {
+        main.classList.add('off');
+        main.classList.remove('on');
+        main.style.cssText = 'opacity:0;visibility:hidden;pointer-events:none;';
+      }
+    }, 100);
+  } catch(e) {}
+})();
+
+var GAS = 'https://script.google.com/macros/s/AKfycbykK9DWjem9ORHxfR_mpdZl5DVh-en0D6JpCdIuel305QmfqxoNU_NqSnjkhFk401hI/exec';
+var FB_PICK = ['Ryan','Jane','Henry','Nicole'];
+var TIMEOUT = 20000;
 
 // ★ 근무 시간 설정
-const WORK_SEGMENTS = [
-  { start: 8*60+30,  end: 12*60     }, // 08:30 ~ 12:00
-  { start: 13*60,    end: 17*60+30  }  // 13:00 ~ 17:30
+var WORK_SEGMENTS = [
+  { start: 8*60+30,  end: 12*60     },
+  { start: 13*60,    end: 17*60+30  }
 ];
 
-// ══════════════════════════════════════════════════════════
-//  ★ 근무 시간만 계산하는 함수 (점심/퇴근 후 제외)
-// ══════════════════════════════════════════════════════════
+// ★ 근무 시간만 계산 (점심/퇴근 후 제외)
 function calcWorkingMins(startISO, endISO) {
   try {
-    const start = new Date(startISO);
-    const end   = endISO ? new Date(endISO) : new Date();
-    if (isNaN(start) || end <= start) return 0;
-
-    let totalMins = 0;
-    let cur = new Date(start);
-
-    // 최대 14일치만 계산 (무한루프 방지)
-    const maxDays = 14;
-    let dayCount = 0;
-
+    var start = new Date(startISO);
+    var end   = endISO ? new Date(endISO) : new Date();
+    if (isNaN(start.getTime()) || end <= start) return 0;
+    var totalMins = 0;
+    var cur = new Date(start.getTime());
+    var maxDays = 14, dayCount = 0;
     while (cur < end && dayCount < maxDays) {
-      const dayBase = new Date(cur);
-      dayBase.setHours(0, 0, 0, 0);
-
-      const nextDay = new Date(dayBase);
+      var dayBase = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), 0, 0, 0, 0);
+      var nextDay = new Date(dayBase.getTime());
       nextDay.setDate(nextDay.getDate() + 1);
-
-      // 이 날의 실제 범위: cur ~ min(end, nextDay)
-      const rangeStart = cur;
-      const rangeEnd   = end < nextDay ? end : nextDay;
-
-      // 분 단위로 변환 (자정 기준)
-      const fromMins = (rangeStart - dayBase) / 60000;
-      const toMins   = (rangeEnd   - dayBase) / 60000;
-
-      // 각 근무 세그먼트와 겹치는 부분 합산
-      for (const seg of WORK_SEGMENTS) {
-        const oStart = Math.max(fromMins, seg.start);
-        const oEnd   = Math.min(toMins,   seg.end);
+      var rangeStart = cur;
+      var rangeEnd   = end < nextDay ? end : nextDay;
+      var fromMins = (rangeStart - dayBase) / 60000;
+      var toMins   = (rangeEnd   - dayBase) / 60000;
+      for (var i = 0; i < WORK_SEGMENTS.length; i++) {
+        var seg = WORK_SEGMENTS[i];
+        var oStart = fromMins > seg.start ? fromMins : seg.start;
+        var oEnd   = toMins   < seg.end   ? toMins   : seg.end;
         if (oEnd > oStart) totalMins += (oEnd - oStart);
       }
-
       cur = nextDay;
       dayCount++;
     }
-
     return Math.floor(totalMins);
-  } catch(e) {
-    return 0;
-  }
+  } catch(e) { return 0; }
 }
 
 function fmtWorkMins(mins) {
   if (mins <= 0) return '0 min';
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m} min`;
+  var h = Math.floor(mins / 60), m = mins % 60;
+  return h > 0 ? (h + 'h ' + m + 'm') : (m + ' min');
 }
 
-// ══════════════════════════════════════════════════════════
-//  NETWORK LAYER
-// ══════════════════════════════════════════════════════════
-let _jsonpCounter = 0;
+// ══════════════ NETWORK ══════════════
+var _jsonpCounter = 0;
 
 function netGet(url) {
-  return fetchGet(url).catch(() => xhrGet(url)).catch(() => jsonpGet(url));
+  return fetchGet(url)['catch'](function() { return xhrGet(url); })['catch'](function() { return jsonpGet(url); });
 }
 
 function jsonpGet(url) {
-  return new Promise((res, rej) => {
-    const cbName = '__jsonp_' + (++_jsonpCounter) + '_' + Date.now();
-    const timer = setTimeout(() => { cleanup(); rej(new Error('jsonp timeout')); }, TIMEOUT);
+  return new Promise(function(res, rej) {
+    var cbName = '__jsonp_' + (++_jsonpCounter) + '_' + Date.now();
+    var timer = setTimeout(function() { cleanup(); rej(new Error('jsonp timeout')); }, TIMEOUT);
     function cleanup() {
       clearTimeout(timer);
       try { delete window[cbName]; } catch(e) {}
-      const s = document.getElementById(cbName);
+      var s = document.getElementById(cbName);
       if (s && s.parentNode) s.parentNode.removeChild(s);
     }
     window[cbName] = function(data) { cleanup(); res(data); };
-    const script = document.createElement('script');
+    var script = document.createElement('script');
     script.id = cbName;
-    script.onerror = () => { cleanup(); rej(new Error('jsonp error')); };
-    const sep = url.includes('?') ? '&' : '?';
+    script.onerror = function() { cleanup(); rej(new Error('jsonp error')); };
+    var sep = url.indexOf('?') >= 0 ? '&' : '?';
     script.src = url + sep + 'callback=' + cbName;
     document.head.appendChild(script);
   });
 }
 
 function xhrGet(url) {
-  return new Promise((res, rej) => {
+  return new Promise(function(res, rej) {
     try {
-      const x = new XMLHttpRequest();
-      const t = setTimeout(() => { x.abort(); rej(new Error('xhr timeout')); }, TIMEOUT);
+      var x = new XMLHttpRequest();
+      var t = setTimeout(function() { x.abort(); rej(new Error('xhr timeout')); }, TIMEOUT);
       x.open('GET', url, true);
-      x.onload = () => { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { rej(e); } };
-      x.onerror = () => { clearTimeout(t); rej(new Error('xhr error')); };
-      x.onabort = () => { clearTimeout(t); rej(new Error('xhr abort')); };
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { rej(e); } };
+      x.onerror = function() { clearTimeout(t); rej(new Error('xhr error')); };
+      x.onabort = function() { clearTimeout(t); rej(new Error('xhr abort')); };
       x.send();
     } catch(e) { rej(e); }
   });
 }
 
 function fetchGet(url) {
-  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timer = controller ? setTimeout(() => controller.abort(), TIMEOUT) : null;
-  return fetch(url + (url.includes('?') ? '&' : '?') + '_=' + Date.now(),
-    controller ? { signal: controller.signal } : {}
-  ).then(r => {
-    if (timer) clearTimeout(timer);
-    return r.json();
-  }).catch(e => {
-    if (timer) clearTimeout(timer);
-    throw e;
-  });
+  if (typeof fetch === 'undefined') return Promise.reject(new Error('no fetch'));
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timer = controller ? setTimeout(function() { controller.abort(); }, TIMEOUT) : null;
+  var sep = url.indexOf('?') >= 0 ? '&' : '?';
+  return fetch(url + sep + '_=' + Date.now(), controller ? { signal: controller.signal } : {})
+    .then(function(r) { if (timer) clearTimeout(timer); return r.json(); })
+    ['catch'](function(e) { if (timer) clearTimeout(timer); throw e; });
 }
 
 function netPost(data) {
-  const body = new URLSearchParams({ op: 'upsertJob', data: JSON.stringify(data) }).toString();
-  return fetch(GAS, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body
-  })
-  .then(r => r.json())
-  .catch(() => {
-    return new Promise((res, rej) => {
-      const x = new XMLHttpRequest();
-      const t = setTimeout(() => { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
+  var body = 'op=upsertJob&data=' + encodeURIComponent(JSON.stringify(data));
+  var doFetch = typeof fetch !== 'undefined'
+    ? fetch(GAS, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })
+        .then(function(r) { return r.json(); })
+    : Promise.reject(new Error('no fetch'));
+
+  return doFetch['catch'](function() {
+    return new Promise(function(res, rej) {
+      var x = new XMLHttpRequest();
+      var t = setTimeout(function() { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
       x.open('POST', GAS, true);
       x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      x.onload = () => { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({}); } };
-      x.onerror = () => { clearTimeout(t); rej(new Error('network')); };
-      x.onabort = () => { clearTimeout(t); rej(new Error('aborted')); };
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({}); } };
+      x.onerror = function() { clearTimeout(t); rej(new Error('network')); };
+      x.onabort = function() { clearTimeout(t); rej(new Error('aborted')); };
       x.send(body);
     });
-  })
-  .catch(() => {
-    const url = GAS + '?op=upsertJob&data=' + encodeURIComponent(JSON.stringify(data));
-    return jsonpGet(url).catch(() => ({}));
+  })['catch'](function() {
+    return jsonpGet(GAS + '?op=upsertJob&data=' + encodeURIComponent(JSON.stringify(data)))['catch'](function() { return {}; });
   });
 }
 
-// ══════════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════════
+// ══════════════ HELPERS ══════════════
 function localISO(d) {
-  const z = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`;
+  var z = function(n) { return String(n).padStart ? String(n).padStart(2,'0') : (n < 10 ? '0' + n : '' + n); };
+  return d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds());
 }
 function initials(n) {
   if (!n) return '?';
-  const w = n.trim().split(/\s+/);
-  if (w.length >= 2 && /[a-zA-Z]/.test(w[0][0])) return (w[0][0]+w[w.length-1][0]).toUpperCase();
+  var w = n.trim().split(/\s+/);
+  if (w.length >= 2 && /[a-zA-Z]/.test(w[0][0])) return (w[0][0] + w[w.length-1][0]).toUpperCase();
   return n.slice(0,2).toUpperCase();
 }
 function fmt12(t) {
-  if (!t || t==='-') return '-';
-  const [h,m] = t.split(':').map(Number);
-  const ap = h>=12?'PM':'AM', h12=h>12?h-12:(h===0?12:h);
-  return `${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ap}`;
+  if (!t || t === '-') return '-';
+  var parts = t.split(':').map(Number);
+  var h = parts[0], m = parts[1];
+  var ap = h >= 12 ? 'PM' : 'AM';
+  var h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return pad2(h12) + ':' + pad2(m) + ' ' + ap;
 }
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
 function fmtD(r) {
   if (!r) return '-';
-  const s = String(r).split('T')[0].split(' ')[0];
-  const p = s.split('-');
-  return p.length===3&&p[0].length===4 ? `${p[1]}/${p[2]}` : s;
+  var s = String(r).split('T')[0].split(' ')[0];
+  var p = s.split('-');
+  return (p.length === 3 && p[0].length === 4) ? (p[1] + '/' + p[2]) : s;
 }
 function tOpts(sel) {
-  const now = new Date();
-  let sh = now.getHours(), sm = now.getMinutes()-30;
-  if (sm<0){sh--;sm+=60;}
-  sm = Math.floor(sm/5)*5;
-  if (sh<8||(sh===8&&sm<30)){sh=8;sm=30;}
-  let h = '<option value="">-- select --</option>';
-  for (let hr=sh; hr<=17; hr++) {
-    const s0=hr===sh?sm:0, e0=hr===17?30:55;
-    for (let m=s0; m<=e0; m+=5) {
-      const v=`${String(hr).padStart(2,'0')}:${String(m).padStart(2,'0')}`,
-            ap=hr>=12?'PM':'AM', h12=hr>12?hr-12:(hr===0?12:hr),
-            l=`${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ap}`;
-      h += `<option value="${v}"${sel===v?' selected':''}>${l}</option>`;
+  var now = new Date();
+  var sh = now.getHours(), sm = now.getMinutes() - 30;
+  if (sm < 0) { sh--; sm += 60; }
+  sm = Math.floor(sm / 5) * 5;
+  if (sh < 8 || (sh === 8 && sm < 30)) { sh = 8; sm = 30; }
+  var h = '<option value="">-- select --</option>';
+  for (var hr = sh; hr <= 17; hr++) {
+    var s0 = (hr === sh) ? sm : 0;
+    var e0 = (hr === 17) ? 30 : 55;
+    for (var mn = s0; mn <= e0; mn += 5) {
+      var v = pad2(hr) + ':' + pad2(mn);
+      var ap = hr >= 12 ? 'PM' : 'AM';
+      var h12 = hr > 12 ? hr - 12 : (hr === 0 ? 12 : hr);
+      var l = pad2(h12) + ':' + pad2(mn) + ' ' + ap;
+      h += '<option value="' + v + '"' + (sel === v ? ' selected' : '') + '>' + l + '</option>';
     }
   }
   return h;
 }
 
-// ══════════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════════
-const S = {
-  me:null, tab:'mine', jobs:[], pickers:FB_PICK, colors:{},
-  timer:null, elTimer:null, loginTimer:null,
-  searchQuery:'', openCards:new Set(), workerStatus:{},
-  lastStatusUpdate: null
+// ★ localStorage 안전 접근 (iOS Private 브라우징 대응)
+var LS = {
+  get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
+  set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
+  del: function(k) { try { localStorage.removeItem(k); } catch(e) {} }
 };
-const $ = id => document.getElementById(id);
 
-function ov(show, msg) {
-  var el = document.getElementById('ov');
-  if (show) { el.style.display='flex'; if(msg) document.getElementById('ovTxt').textContent=msg; }
-  else { el.style.display='none'; }
+// ══════════════ STATE ══════════════
+var S = {
+  me:null, tab:'mine', jobs:[], pickers:FB_PICK.slice(), colors:{},
+  timer:null, elTimer:null, loginTimer:null,
+  searchQuery:'', openCards:{}, workerStatus:{}
+};
+
+function $$(id) { return document.getElementById(id); }
+
+function showPage(id) {
+  var pages = ['pgLogin', 'pgMain'];
+  for (var i = 0; i < pages.length; i++) {
+    var el = $$(pages[i]);
+    if (!el) continue;
+    if (pages[i] === id) {
+      el.classList.remove('off');
+      el.classList.add('on');
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
+      el.style.pointerEvents = 'auto';
+    } else {
+      el.classList.add('off');
+      el.classList.remove('on');
+      el.style.opacity = '0';
+      el.style.visibility = 'hidden';
+      el.style.pointerEvents = 'none';
+    }
+  }
 }
-function showPage(id) { ['pgLogin','pgMain'].forEach(p => $(p).classList.toggle('off', p!==id)); }
-let _tt;
-function toast(msg, type='') {
-  const el=$('toast'); el.textContent=msg; el.className='show '+type;
-  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'), 2800);
+
+var _tt;
+function toast(msg, type) {
+  type = type || '';
+  var el = $$('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(_tt);
+  _tt = setTimeout(function() { el.classList.remove('show'); }, 2800);
 }
 function setSyn(s) {
-  const d=$('synDot'), t=$('synTxt');
-  d.className = 'syn-dot '+(s==='busy'?'busy':s==='err'?'err':'');
-  if (s==='busy') t.textContent='Syncing...';
-  else if (s==='err') t.textContent='Connection error — tap Refresh';
-  else { const tm=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); t.textContent=`Synced ${tm}`; }
+  var d = $$('synDot'), t = $$('synTxt');
+  d.className = 'syn-dot' + (s === 'busy' ? ' busy' : s === 'err' ? ' err' : '');
+  if (s === 'busy') t.textContent = 'Syncing...';
+  else if (s === 'err') t.textContent = 'Connection error — tap Refresh';
+  else {
+    var now = new Date();
+    var h = now.getHours(), m = now.getMinutes();
+    var ap = h >= 12 ? 'PM' : 'AM';
+    var h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    t.textContent = 'Synced ' + pad2(h12) + ':' + pad2(m) + ' ' + ap;
+  }
 }
 
-// ══════════════════════════════════════════════════════════
-//  APP
-// ══════════════════════════════════════════════════════════
-const App = {
+// ══════════════ APP ══════════════
+var App = {
 
-  init() {
-    let saved = null;
+  init: function() {
     try {
-      const cachedSettings = localStorage.getItem('sk_settings');
+      var cachedSettings = LS.get('sk_settings');
       if (cachedSettings) {
-        const cs = JSON.parse(cachedSettings);
+        var cs = JSON.parse(cachedSettings);
         if (Array.isArray(cs.pickers) && cs.pickers.length) S.pickers = cs.pickers;
         S.colors = cs.colors || {};
       }
-      saved = localStorage.getItem('sk_worker');
     } catch(e) {}
 
     this.buildGrid();
 
-    if (saved && S.pickers.includes(saved)) {
+    var saved = LS.get('sk_worker');
+    if (saved && S.pickers.indexOf(saved) >= 0) {
       S.me = saved;
-      setTimeout(() => {
+      setTimeout(function() {
         try {
-          const btn = document.querySelector('.pc[data-n="' + saved + '"]');
-          if (btn) { btn.classList.add('sel'); $('goBtn').disabled = false; }
+          var btn = document.querySelector('.pc[data-n="' + saved + '"]');
+          if (btn) { btn.classList.add('sel'); $$('goBtn').disabled = false; }
         } catch(e) {}
-      }, 50);
+      }, 80);
     }
 
+    // ★ 로그인 페이지 표시 (명시적)
     showPage('pgLogin');
 
-    // 로그인 페이지에서 상태 갱신 시작
     this.startLoginRefresh();
 
-    // 백그라운드 설정 갱신
-    setTimeout(() => { try { this.refreshSettings(); } catch(e) {} }, 300);
+    var self = this;
+    setTimeout(function() { try { self.refreshSettings(); } catch(e) {} }, 500);
   },
 
-  // ★ 로그인 페이지 상태 갱신 (15초마다 - 안정적)
-  startLoginRefresh() {
+  startLoginRefresh: function() {
     clearInterval(S.loginTimer);
-    // 첫 로드는 즉시
+    var self = this;
     this.loadStatusOnly();
-    // 이후 15초마다
-    S.loginTimer = setInterval(() => {
-      if (!S.me) {
-        // 로그인 페이지에 있을 때만
-        this.loadStatusOnly();
-      }
+    S.loginTimer = setInterval(function() {
+      if (!S.me) self.loadStatusOnly();
     }, 15000);
   },
 
-  // ★ 로그인 페이지용: job 데이터만 가져와서 상태 표시 갱신
-  async loadStatusOnly() {
-    try {
-      const d = await netGet(`${GAS}?op=listJobs&t=${Date.now()}`);
-      if (d.ok) {
+  loadStatusOnly: function() {
+    var self = this;
+    netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
+      if (d && d.ok) {
         S.jobs = d.jobs || [];
         if (Array.isArray(d.pickers) && d.pickers.length) {
           S.pickers = d.pickers;
           S.colors = d.pickerColors || S.colors;
         }
-        this.updateWorkerStatus();
-        // 갱신 시간 표시
-        const tm = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        const el = $('statusRefreshInfo');
-        if (el) el.textContent = `Updated ${tm}`;
+        self.updateWorkerStatus();
+        var now = new Date();
+        var h = now.getHours(), m = now.getMinutes(), sec = now.getSeconds();
+        var ap = h >= 12 ? 'PM' : 'AM';
+        var h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+        var el = $$('statusRefreshInfo');
+        if (el) el.textContent = 'Updated ' + pad2(h12) + ':' + pad2(m) + ':' + pad2(sec) + ' ' + ap;
       }
-    } catch(e) {
-      const el = $('statusRefreshInfo');
+    })['catch'](function() {
+      var el = $$('statusRefreshInfo');
       if (el) el.textContent = 'Status update failed — retrying...';
-    }
+    });
   },
 
-  async refreshSettings() {
-    try {
-      const d = await netGet(`${GAS}?op=getSettings&t=${Date.now()}`);
-      if (Array.isArray(d.pickers) && d.pickers.length) {
+  refreshSettings: function() {
+    var self = this;
+    netGet(GAS + '?op=getSettings&t=' + Date.now()).then(function(d) {
+      if (d && Array.isArray(d.pickers) && d.pickers.length) {
         S.pickers = d.pickers;
         S.colors = d.pickerColors || {};
-        localStorage.setItem('sk_settings', JSON.stringify({pickers: S.pickers, colors: S.colors}));
-        if (!S.me) this.buildGrid();
+        LS.set('sk_settings', JSON.stringify({ pickers: S.pickers, colors: S.colors }));
+        if (!S.me) self.buildGrid();
       }
-    } catch(e) {
-      console.log('Settings refresh failed:', e.message);
-    }
+    })['catch'](function(e) { /* silent */ });
   },
 
-  buildGrid() {
-    const g = $('pgrid');
-    g.innerHTML = S.pickers.map(p => {
-      const col = S.colors[p] || '#00d4ff';
-      const safe = p.replace(/'/g,"\\'");
-      const st = S.workerStatus[p] || 'offline';
-      const stLabel = { working:'🔵 Working', idle:'🟡 Standing By', offline:'🔴 Off Duty' }[st];
-      return `<button class="pc" data-n="${p}" onclick="App.pick('${safe}')">
-        <span class="pc-status ${st}"></span>
-        <div class="pc-dot" style="background:${col};box-shadow:0 0 8px ${col}66;"></div>
-        <div class="pc-name">${p}</div>
-        <div class="pc-status-label ${st}">${stLabel}</div>
-      </button>`;
-    }).join('');
-    // 선택 상태 복원
+  buildGrid: function() {
+    var g = $$('pgrid');
+    if (!g) return;
+    var html = '';
+    for (var i = 0; i < S.pickers.length; i++) {
+      var p = S.pickers[i];
+      var col = S.colors[p] || '#00d4ff';
+      var safe = p.replace(/'/g, "\\'");
+      var st = S.workerStatus[p] || 'offline';
+      var stLabelMap = { working:'🔵 Working', idle:'🟡 Standing By', offline:'🔴 Off Duty' };
+      var stLabel = stLabelMap[st] || stLabelMap.offline;
+      html += '<button class="pc" data-n="' + p + '" onclick="App.pick(\'' + safe + '\')">'
+            + '<span class="pc-status ' + st + '"></span>'
+            + '<div class="pc-dot" style="background:' + col + ';box-shadow:0 0 8px ' + col + '66;"></div>'
+            + '<div class="pc-name">' + p + '</div>'
+            + '<div class="pc-status-label ' + st + '">' + stLabel + '</div>'
+            + '</button>';
+    }
+    g.innerHTML = html;
     if (S.me) {
-      const btn = g.querySelector(`.pc[data-n="${S.me}"]`);
+      var btn = g.querySelector('.pc[data-n="' + S.me + '"]');
       if (btn) btn.classList.add('sel');
     }
   },
 
-  updateWorkerStatus() {
-    const status = {};
-    S.pickers.forEach(p => { status[p] = 'offline'; });
-    S.jobs.forEach(j => {
-      const st = (j.status || '').toLowerCase();
-      const picker = j.picker;
-      if (!picker || !S.pickers.includes(picker)) return;
+  updateWorkerStatus: function() {
+    var status = {};
+    for (var i = 0; i < S.pickers.length; i++) status[S.pickers[i]] = 'offline';
+    for (var j = 0; j < S.jobs.length; j++) {
+      var job = S.jobs[j];
+      var st = (job.status || '').toLowerCase();
+      var picker = job.picker;
+      if (!picker || S.pickers.indexOf(picker) < 0) continue;
       if (st === 'started') {
         status[picker] = 'working';
       } else if ((st === 'ready' || st === 'idle') && status[picker] !== 'working') {
         status[picker] = 'idle';
-      } else if (st === 'completed' && status[picker] === 'offline') {
-        // 오늘 completed가 있으면 idle (출근은 했음)
-        // 단, 이미 working이면 유지
       }
-    });
+    }
     S.workerStatus = status;
-    // 로그인 페이지면 그리드 갱신
     if (!S.me) this.buildGrid();
   },
 
-  pick(name) {
+  pick: function(name) {
     S.me = name;
-    document.querySelectorAll('.pc').forEach(b => b.classList.toggle('sel', b.dataset.n===name));
-    $('goBtn').disabled = false;
+    var btns = document.querySelectorAll('.pc');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('sel', btns[i].dataset.n === name);
+    }
+    $$('goBtn').disabled = false;
   },
 
-  login() {
+  login: function() {
     if (!S.me) return;
-    localStorage.setItem('sk_worker', S.me);
-    clearInterval(S.loginTimer); // 로그인 후 login 타이머 중지
+    LS.set('sk_worker', S.me);
+    clearInterval(S.loginTimer);
     this.enterMain();
   },
 
-  async enterMain() {
+  enterMain: function() {
     showPage('pgMain');
-    $('topDot').textContent = initials(S.me);
-    $('topName').textContent = S.me;
-    ov(false);
+    $$('topDot').textContent = initials(S.me);
+    $$('topName').textContent = S.me;
     this.startTimers();
     this.load();
   },
 
-  logout() {
-    localStorage.removeItem('sk_worker');
+  logout: function() {
+    LS.del('sk_worker');
     clearInterval(S.timer); clearInterval(S.elTimer);
     S.me = null; S.jobs = [];
-    document.querySelectorAll('.pc').forEach(b => b.classList.remove('sel'));
-    $('goBtn').disabled = true;
+    var btns = document.querySelectorAll('.pc');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('sel');
+    $$('goBtn').disabled = true;
     showPage('pgLogin');
-    // 로그인 페이지 상태 갱신 재시작
     this.startLoginRefresh();
   },
 
-  async load() {
+  load: function() {
     setSyn('busy');
-    try {
-      const d = await netGet(`${GAS}?op=listJobs&t=${Date.now()}`);
-      if (d.ok) {
+    var self = this;
+    netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
+      if (d && d.ok) {
         S.jobs = d.jobs || [];
         if (Array.isArray(d.pickers) && d.pickers.length) S.pickers = d.pickers;
         S.colors = d.pickerColors || S.colors;
       }
-      this.render();
+      self.render();
       setSyn('ok');
-    } catch(e) {
-      console.log('Load error:', e);
+    })['catch'](function(e) {
       setSyn('err');
-    }
+    });
   },
 
-  tab(t) {
+  tab: function(t) {
     S.tab = t;
     S.searchQuery = '';
-    S.openCards.clear();
-    try { $('searchInput').value = ''; $('searchClear').style.display='none'; $('searchCount').textContent=''; } catch(e){}
-    ['mine','all','done'].forEach(x => {
-      $('t'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('on', x===t);
-    });
-    const showSearch = (t === 'all' || t === 'done');
-    $('searchBar').style.display = showSearch ? 'block' : 'none';
+    S.openCards = {};
+    try {
+      $$('searchInput').value = '';
+      $$('searchClear').style.display = 'none';
+      $$('searchCount').textContent = '';
+    } catch(e) {}
+    var tabs = ['mine', 'all', 'done'];
+    for (var i = 0; i < tabs.length; i++) {
+      var x = tabs[i];
+      var id = 't' + x.charAt(0).toUpperCase() + x.slice(1);
+      var el = $$(id);
+      if (el) el.classList.toggle('on', x === t);
+    }
+    var showSearch = (t === 'all' || t === 'done');
+    $$('searchBar').style.display = showSearch ? 'block' : 'none';
     this.render();
   },
 
-  render() {
+  render: function() {
     this.updateWorkerStatus();
     this.kpis();
     this.list();
   },
 
-  kpis() {
-    const j = S.jobs;
-    const myA = j.filter(x=>x.picker===S.me&&x.status!=='completed').length;
-    const pend = j.filter(x=>['ready','idle',''].includes((x.status||'').toLowerCase())).length;
-    const done = j.filter(x=>x.status==='completed').length;
-    $('kMy').textContent=myA; $('kPend').textContent=pend;
-    $('kDone').textContent=done; $('kTot').textContent=j.length;
-    const b=$('tbadge');
-    if(myA>0){b.style.display='';b.textContent=myA;}else{b.style.display='none';}
+  kpis: function() {
+    var j = S.jobs;
+    var myA = 0, pend = 0, done = 0;
+    for (var i = 0; i < j.length; i++) {
+      var st = (j[i].status || '').toLowerCase();
+      if (j[i].picker === S.me && st !== 'completed') myA++;
+      if (st === 'ready' || st === 'idle' || st === '') pend++;
+      if (st === 'completed') done++;
+    }
+    $$('kMy').textContent = myA;
+    $$('kPend').textContent = pend;
+    $$('kDone').textContent = done;
+    $$('kTot').textContent = j.length;
+    var b = $$('tbadge');
+    if (myA > 0) { b.style.display = ''; b.textContent = myA; } else { b.style.display = 'none'; }
   },
 
-  list() {
-    const el = $('jlist');
-    let f;
-    if (S.tab==='mine') f = S.jobs.filter(j => j.picker===S.me && j.status!=='completed');
-    else if (S.tab==='done') f = S.jobs.filter(j => j.status==='completed');
-    else f = S.jobs.filter(j => j.status!=='completed');
+  list: function() {
+    var el = $$('jlist');
+    var f = [];
+    for (var i = 0; i < S.jobs.length; i++) {
+      var j = S.jobs[i];
+      var st = (j.status || '').toLowerCase();
+      if (S.tab === 'mine') { if (j.picker === S.me && st !== 'completed') f.push(j); }
+      else if (S.tab === 'done') { if (st === 'completed') f.push(j); }
+      else { if (st !== 'completed') f.push(j); }
+    }
 
-    const ord = {started:0,ready:1,idle:2,'':3};
-    f.sort((a,b) => {
-      const oa=ord[(a.status||'').toLowerCase()]??3, ob=ord[(b.status||'').toLowerCase()]??3;
-      return oa!==ob ? oa-ob : (a.shipDate||'').localeCompare(b.shipDate||'');
+    var ord = { started:0, ready:1, idle:2, '':3 };
+    f.sort(function(a, b) {
+      var stA = (a.status || '').toLowerCase();
+      var stB = (b.status || '').toLowerCase();
+      var oa = (ord[stA] !== undefined) ? ord[stA] : 3;
+      var ob = (ord[stB] !== undefined) ? ord[stB] : 3;
+      if (oa !== ob) return oa - ob;
+      return (a.shipDate || '').localeCompare(b.shipDate || '');
     });
 
-    // ★ 검색 필터: 인보이스 + 리마크 + 작업자 이름
     if (S.searchQuery) {
-      const q = S.searchQuery.toLowerCase();
-      f = f.filter(j =>
-        (j.invoice||'').toLowerCase().includes(q) ||
-        (j.remarks||'').toLowerCase().includes(q) ||
-        (j.picker||'').toLowerCase().includes(q)   // ★ 작업자 이름 추가
-      );
+      var q = S.searchQuery.toLowerCase();
+      var filtered = [];
+      for (var k = 0; k < f.length; k++) {
+        var job = f[k];
+        if ((job.invoice || '').toLowerCase().indexOf(q) >= 0 ||
+            (job.remarks || '').toLowerCase().indexOf(q) >= 0 ||
+            (job.picker  || '').toLowerCase().indexOf(q) >= 0) {
+          filtered.push(job);
+        }
+      }
+      f = filtered;
     }
 
     if (S.tab !== 'mine' && S.searchQuery) {
-      $('searchCount').textContent = f.length + ' result' + (f.length !== 1 ? 's' : '') + ' found';
+      $$('searchCount').textContent = f.length + ' result' + (f.length !== 1 ? 's' : '') + ' found';
     } else {
-      try { $('searchCount').textContent = ''; } catch(e) {}
+      try { $$('searchCount').textContent = ''; } catch(e) {}
     }
 
     if (!f.length) {
-      const msgs = {
+      var msgsMap = {
         mine: ['📋','No jobs assigned to you','Jobs assigned to you will appear here'],
         all:  ['📦','No active jobs','All jobs completed!'],
         done: ['✅','No completed jobs yet','Completed jobs will appear here']
       };
-      const [ico,tit,sub] = msgs[S.tab];
-      el.innerHTML = `<div class="empty"><div class="eico">${ico}</div><div class="etit">${tit}</div><div class="esub">${sub}</div></div>`;
+      var m = msgsMap[S.tab] || msgsMap.all;
+      el.innerHTML = '<div class="empty"><div class="eico">' + m[0] + '</div><div class="etit">' + m[1] + '</div><div class="esub">' + m[2] + '</div></div>';
       return;
     }
-    el.innerHTML = f.map(j => this.card(j)).join('');
-    S.openCards.forEach(inv => {
-      const card = document.getElementById('card-' + inv);
+    var html = '';
+    for (var x = 0; x < f.length; x++) html += this.card(f[x]);
+    el.innerHTML = html;
+
+    var openKeys = Object.keys(S.openCards);
+    for (var oi = 0; oi < openKeys.length; oi++) {
+      var card = document.getElementById('card-' + openKeys[oi]);
       if (card) card.classList.add('open');
-    });
+    }
   },
 
-  card(job) {
-    const st = (job.status||'').toLowerCase() || 'idle';
-    const isS=st==='started', isD=st==='completed', isMine=job.picker===S.me;
-    const pcls = {idle:'p-idle',ready:'p-ready',started:'p-started',completed:'p-completed'}[st]||'p-idle';
-    const ptxt = {idle:'Idle',ready:'Ready',started:'Started',completed:'Done'}[st]||'Idle';
-    const col = S.colors[job.picker]||'#6366f1';
-    const inv = job.invoice||'';
+  card: function(job) {
+    var st = (job.status || '').toLowerCase() || 'idle';
+    var isS = st === 'started', isD = st === 'completed', isMine = job.picker === S.me;
+    var pclsMap = { idle:'p-idle', ready:'p-ready', started:'p-started', completed:'p-completed' };
+    var pcls = pclsMap[st] || 'p-idle';
+    var ptxtMap = { idle:'Idle', ready:'Ready', started:'Started', completed:'Done' };
+    var ptxt = ptxtMap[st] || 'Idle';
+    var col = S.colors[job.picker] || '#6366f1';
+    var inv = job.invoice || '';
 
-    const cardCls = `jcard st-${st}${isMine&&!isD?' mine':''}`;
-    const headerHtml = `
-      <div class="jch" onclick="App.toggleCard('${inv}')">
-        <div style="flex:1;min-width:0;">
-          <div class="jinv">${inv}</div>
-          <div class="jrem">${job.remarks||'No remarks'}</div>
-          <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
-            <span style="font-size:11px;color:#7a93b8;">📅 ${fmtD(job.shipDate)}</span>
-            <span style="font-size:11px;color:#00d4ff;">🚚 ${job.trucking||'-'}</span>
-            <span style="font-size:11px;color:#7a93b8;">SKU ${job.skuCount||0} / Qty ${job.totalQty||0}</span>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <span class="pill ${pcls}">${ptxt}</span>
-          <span class="expand-icon">⌄</span>
-        </div>
-      </div>`;
+    var cardCls = 'jcard st-' + st + (isMine && !isD ? ' mine' : '');
 
-    let pickerHtml = '';
-    if (isS||isD) {
-      pickerHtml = `<div class="prow"><span class="plbl">Picker</span><span class="ptag" style="background:${col}22;color:${col};border:1px solid ${col}44;">${job.picker||'-'}</span></div>`;
+    var headerHtml = '<div class="jch" onclick="App.toggleCard(\'' + inv + '\')">'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div class="jinv">' + inv + '</div>'
+      + '<div class="jrem">' + (job.remarks || 'No remarks') + '</div>'
+      + '<div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">'
+      + '<span style="font-size:11px;color:#7a93b8;">📅 ' + fmtD(job.shipDate) + '</span>'
+      + '<span style="font-size:11px;color:#00d4ff;">🚚 ' + (job.trucking || '-') + '</span>'
+      + '<span style="font-size:11px;color:#7a93b8;">SKU ' + (job.skuCount || 0) + ' / Qty ' + (job.totalQty || 0) + '</span>'
+      + '</div></div>'
+      + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
+      + '<span class="pill ' + pcls + '">' + ptxt + '</span>'
+      + '<span class="expand-icon">&#8964;</span>'
+      + '</div></div>';
+
+    var pickerHtml = '';
+    if (isS || isD) {
+      pickerHtml = '<div class="prow"><span class="plbl">Picker</span>'
+        + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;">' + (job.picker || '-') + '</span></div>';
     } else {
-      const opts = S.pickers.map(p=>`<option value="${p}"${job.picker===p?' selected':''}>${p}</option>`).join('');
-      pickerHtml = `<div class="prow"><span class="plbl">Picker</span><select class="psel" onchange="App.setPicker('${inv}',this.value)"><option value="">Select...</option>${opts}</select></div>`;
+      var opts = '<option value="">Select...</option>';
+      for (var pi = 0; pi < S.pickers.length; pi++) {
+        var p = S.pickers[pi];
+        opts += '<option value="' + p + '"' + (job.picker === p ? ' selected' : '') + '>' + p + '</option>';
+      }
+      pickerHtml = '<div class="prow"><span class="plbl">Picker</span>'
+        + '<select class="psel" onchange="App.setPicker(\'' + inv + '\',this.value)">' + opts + '</select></div>';
     }
 
-    let timeHtml = '';
+    var timeHtml = '';
     if (isD) {
-      // ★ 완료된 작업: 실제 근무 시간 계산
-      let durHtml = '';
+      var durHtml = '';
       try {
         if (job.startAtISO && job.endAtISO) {
-          const workMins = calcWorkingMins(job.startAtISO, job.endAtISO);
+          var workMins = calcWorkingMins(job.startAtISO, job.endAtISO);
           if (workMins > 0) {
-            durHtml = `<div class="dur-bar"><span class="dur-lbl">⏱ Work Duration (excl. lunch)</span><span class="dur-val">${fmtWorkMins(workMins)}</span></div>`;
+            durHtml = '<div class="dur-bar"><span class="dur-lbl">⏱ Work Duration (excl. lunch)</span><span class="dur-val">' + fmtWorkMins(workMins) + '</span></div>';
           }
         }
       } catch(e) {}
-      timeHtml = `<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">${fmt12(job.startTime)}</div></div><div class="tbl"><div class="tlbl">End</div><div class="tdis">${fmt12(job.endTime)}</div></div></div>${durHtml}`;
+      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
+        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>' + durHtml;
     } else if (isS) {
-      timeHtml = `<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">${fmt12(job.startTime)}</div></div><div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-${inv}">${tOpts(job.endTime||'')}</select></div></div>`;
+      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
+        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '">' + tOpts(job.endTime || '') + '</select></div></div>';
     } else {
-      timeHtml = `<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><select class="tsel" id="st-${inv}">${tOpts(job.startTime||'')}</select></div><div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-${inv}">${tOpts(job.endTime||'')}</select></div></div>`;
+      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><select class="tsel" id="st-' + inv + '">' + tOpts(job.startTime || '') + '</select></div>'
+        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '">' + tOpts(job.endTime || '') + '</select></div></div>';
     }
 
-    // ★ Elapsed: 근무 시간만 계산
-    let elapsedHtml = '';
+    var elapsedHtml = '';
     if (isS && job.startAtISO) {
-      const workMins = calcWorkingMins(job.startAtISO);
-      const elapsedStr = fmtWorkMins(workMins);
-      elapsedHtml = `<div class="ebar"><span class="elbl">⏱ Work Elapsed (excl. lunch/OT)</span><span class="eval" id="el-${inv}">${elapsedStr}</span></div>`;
+      var workMinsEl = calcWorkingMins(job.startAtISO);
+      elapsedHtml = '<div class="ebar"><span class="elbl">⏱ Work Elapsed (excl. lunch/OT)</span><span class="eval" id="el-' + inv + '">' + fmtWorkMins(workMinsEl) + '</span></div>';
     }
 
-    let actionHtml = '';
+    var actionHtml = '';
     if (isD) {
-      actionHtml = `<div class="arow"><button class="ab ab-comp" disabled>✓ Completed</button></div>`;
+      actionHtml = '<div class="arow"><button class="ab ab-comp" disabled>✓ Completed</button></div>';
     } else if (isS) {
-      actionHtml = `<div class="arow"><button class="ab ab-done" onclick="App.complete('${inv}')">✓ Complete Job</button></div>`;
+      actionHtml = '<div class="arow"><button class="ab ab-done" onclick="App.complete(\'' + inv + '\')">✓ Complete Job</button></div>';
     } else {
-      const canStart = !!job.picker;
-      actionHtml = `<div class="arow"><button class="ab ab-start" onclick="App.start('${inv}')" ${!canStart?'disabled':''}>▶ Start</button><button class="ab ab-done" onclick="App.complete('${inv}')">✓ Complete</button></div>`;
+      var canStart = !!job.picker;
+      actionHtml = '<div class="arow">'
+        + '<button class="ab ab-start" onclick="App.start(\'' + inv + '\')"' + (!canStart ? ' disabled' : '') + '>▶ Start</button>'
+        + '<button class="ab ab-done" onclick="App.complete(\'' + inv + '\')">✓ Complete</button></div>';
     }
 
-    const openCls = isS ? ' open' : '';
-    return `<div class="${cardCls}${openCls}" id="card-${inv}">
-      ${headerHtml}
-      <div class="jcard-body">
-        ${pickerHtml}${timeHtml}${elapsedHtml}${actionHtml}
-      </div>
-    </div>`;
+    var openCls = isS ? ' open' : '';
+    return '<div class="' + cardCls + openCls + '" id="card-' + inv + '">'
+      + headerHtml
+      + '<div class="jcard-body">' + pickerHtml + timeHtml + elapsedHtml + actionHtml + '</div>'
+      + '</div>';
   },
 
-  toggleCard(inv) {
-    const card = document.getElementById('card-' + inv);
+  toggleCard: function(inv) {
+    var card = document.getElementById('card-' + inv);
     if (card) {
       card.classList.toggle('open');
-      if (card.classList.contains('open')) S.openCards.add(inv);
-      else S.openCards.delete(inv);
+      if (card.classList.contains('open')) S.openCards[inv] = 1;
+      else delete S.openCards[inv];
     }
   },
 
-  async setPicker(inv, picker) {
+  setPicker: function(inv, picker) {
     if (!picker) return;
-    const j = S.jobs.find(x=>x.invoice===inv);
-    if (j) j.picker = picker;
-    this.render();
-    try { await netPost({ invoice:inv, picker }); } catch(e) { toast('Save error','err'); }
-  },
-
-  async start(inv) {
-    const job = S.jobs.find(j=>j.invoice===inv);
-    if (!job) return;
-    if (!job.picker) { toast('Select a picker first','err'); return; }
-    const el = $(`st-${inv}`);
-    const sel = el ? el.value : '';
-    const now = new Date();
-    let st, sISO;
-    if (sel) {
-      const [h,m]=sel.split(':');
-      const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),+h,+m);
-      st=sel; sISO=localISO(d);
-    } else {
-      st=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-      sISO=localISO(now);
+    for (var i = 0; i < S.jobs.length; i++) {
+      if (S.jobs[i].invoice === inv) { S.jobs[i].picker = picker; break; }
     }
-    Object.assign(job,{startTime:st,startAtISO:sISO,status:'started'});
     this.render();
-    toast('Job started ▶','ok');
-    try { await netPost({invoice:inv,startTime:st,startAtISO:sISO,status:'started'}); }
-    catch(e) { toast('Sync error — check connection','err'); }
-    setTimeout(()=>this.load(), 9000);
+    netPost({ invoice:inv, picker:picker })['catch'](function() { toast('Save error', 'err'); });
   },
 
-  async complete(inv) {
-    const job = S.jobs.find(j=>j.invoice===inv);
+  start: function(inv) {
+    var self = this;
+    var job = null;
+    for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
     if (!job) return;
-    const el = $(`end-${inv}`);
-    const sel = el ? el.value : '';
-    const now = new Date();
-    let et, eISO;
+    if (!job.picker) { toast('Select a picker first', 'err'); return; }
+    var elSt = $$('st-' + inv);
+    var sel = elSt ? elSt.value : '';
+    var now = new Date();
+    var st, sISO;
     if (sel) {
-      const [h,m]=sel.split(':');
-      const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),+h,+m);
-      et=sel; eISO=localISO(d);
+      var parts = sel.split(':');
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
+      st = sel; sISO = localISO(d);
     } else {
-      et=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-      eISO=localISO(now);
+      st = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+      sISO = localISO(now);
     }
-    Object.assign(job,{endTime:et,endAtISO:eISO,status:'completed'});
+    job.startTime = st; job.startAtISO = sISO; job.status = 'started';
     this.render();
-    toast('Job completed ✓','ok');
-    try { await netPost({invoice:inv,endTime:et,endAtISO:eISO,status:'completed'}); }
-    catch(e) { toast('Sync error — check connection','err'); }
-    setTimeout(()=>this.load(), 9000);
+    toast('Job started ▶', 'ok');
+    netPost({ invoice:inv, startTime:st, startAtISO:sISO, status:'started' })
+      ['catch'](function() { toast('Sync error — check connection', 'err'); });
+    setTimeout(function() { self.load(); }, 9000);
   },
 
-  onSearch(val) {
+  complete: function(inv) {
+    var self = this;
+    var job = null;
+    for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
+    if (!job) return;
+    var elEnd = $$('end-' + inv);
+    var sel = elEnd ? elEnd.value : '';
+    var now = new Date();
+    var et, eISO;
+    if (sel) {
+      var parts = sel.split(':');
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
+      et = sel; eISO = localISO(d);
+    } else {
+      et = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+      eISO = localISO(now);
+    }
+    job.endTime = et; job.endAtISO = eISO; job.status = 'completed';
+    this.render();
+    toast('Job completed ✓', 'ok');
+    netPost({ invoice:inv, endTime:et, endAtISO:eISO, status:'completed' })
+      ['catch'](function() { toast('Sync error — check connection', 'err'); });
+    setTimeout(function() { self.load(); }, 9000);
+  },
+
+  onSearch: function(val) {
     S.searchQuery = val.trim();
-    $('searchClear').style.display = val ? 'inline' : 'none';
+    $$('searchClear').style.display = val ? 'inline' : 'none';
     this.render();
   },
 
-  clearSearch() {
+  clearSearch: function() {
     S.searchQuery = '';
-    $('searchInput').value = '';
-    $('searchClear').style.display = 'none';
-    $('searchCount').textContent = '';
+    $$('searchInput').value = '';
+    $$('searchClear').style.display = 'none';
+    $$('searchCount').textContent = '';
     this.render();
-    $('searchInput').focus();
+    try { $$('searchInput').focus(); } catch(e) {}
   },
 
-  startTimers() {
+  startTimers: function() {
     clearInterval(S.timer); clearInterval(S.elTimer);
-    // 메인 데이터 동기화: 10초
-    S.timer = setInterval(()=>{ if(!document.hidden&&S.me) this.load(); }, 10000);
-    // ★ Elapsed 시간 갱신: 30초마다 (안정적)
-    S.elTimer = setInterval(()=>{
-      S.jobs.filter(j=>j.status==='started'&&j.startAtISO).forEach(job=>{
-        const el=$(`el-${job.invoice}`);
-        if(!el) return;
-        const workMins = calcWorkingMins(job.startAtISO);
-        el.textContent = fmtWorkMins(workMins);
-      });
+    var self = this;
+    S.timer = setInterval(function() {
+      if (!document.hidden && S.me) self.load();
+    }, 10000);
+    S.elTimer = setInterval(function() {
+      for (var i = 0; i < S.jobs.length; i++) {
+        var job = S.jobs[i];
+        if (job.status === 'started' && job.startAtISO) {
+          var el = $$('el-' + job.invoice);
+          if (el) el.textContent = fmtWorkMins(calcWorkingMins(job.startAtISO));
+        }
+      }
     }, 30000);
   }
 };
 
-// 오버레이 안전 제거
-(function() {
-  try {
-    var ov = document.getElementById('ov');
-    if (ov) {
-      setTimeout(function() {
-        ov.style.display = 'none';
-        var login = document.getElementById('pgLogin');
-        if (login) { login.classList.remove('off'); login.style.opacity = '1'; }
-      }, 2000);
-    }
-  } catch(e) {}
-})();
-
-document.addEventListener('DOMContentLoaded', function() {
+// ★ DOMContentLoaded + load 이중 보장 (iOS Safari 대응)
+function startApp() {
   try { App.init(); } catch(e) {
-    console.log('Init error:', e);
-    try { document.getElementById('ov').style.display='none'; } catch(x){}
-    try {
-      document.getElementById('pgLogin').classList.remove('off');
-      document.getElementById('pgLogin').style.opacity = '1';
-    } catch(x){}
+    // 초기화 실패해도 로그인 화면은 표시
+    try { showPage('pgLogin'); } catch(e2) {}
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  // 이미 로드된 경우 (iOS에서 가끔 발생)
+  startApp();
+}
+
+// ★ window.load도 백업으로 등록
+window.addEventListener('load', function() {
+  var login = $$('pgLogin');
+  if (login && login.classList.contains('off')) {
+    // 아직 표시 안 됐으면 강제 표시
+    try { showPage('pgLogin'); } catch(e) {}
   }
 });
-document.addEventListener('visibilitychange', ()=>{
+
+document.addEventListener('visibilitychange', function() {
   if (!document.hidden && S.me) App.load();
 });
 </script>
