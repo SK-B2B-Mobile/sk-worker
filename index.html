@@ -602,9 +602,10 @@ var App = {
     clearInterval(S.loginTimer);
     var self = this;
     this.loadStatusOnly();
+    // ★ 10초마다 갱신 (안정성과 실시간성 균형)
     S.loginTimer = setInterval(function() {
       if (!S.me) self.loadStatusOnly();
-    }, 15000);
+    }, 10000);
   },
 
   loadStatusOnly: function() {
@@ -645,25 +646,52 @@ var App = {
   buildGrid: function() {
     var g = $$('pgrid');
     if (!g) return;
-    var html = '';
-    for (var i = 0; i < S.pickers.length; i++) {
-      var p = S.pickers[i];
-      var col = S.colors[p] || '#00d4ff';
-      var safe = p.replace(/'/g, "\\'");
-      var st = S.workerStatus[p] || 'offline';
-      var stLabelMap = { working:'🔵 Working', idle:'🟡 Standing By', offline:'🔴 Off Duty' };
-      var stLabel = stLabelMap[st] || stLabelMap.offline;
-      html += '<button class="pc" data-n="' + p + '" onclick="App.pick(\'' + safe + '\')">'
-            + '<span class="pc-status ' + st + '"></span>'
-            + '<div class="pc-dot" style="background:' + col + ';box-shadow:0 0 8px ' + col + '66;"></div>'
-            + '<div class="pc-name">' + p + '</div>'
-            + '<div class="pc-status-label ' + st + '">' + stLabel + '</div>'
-            + '</button>';
+    var stLabelMap = { working:'🔵 Working', idle:'🟡 Standing By', offline:'🔴 Off Duty' };
+    var existingBtns = g.querySelectorAll('.pc');
+
+    if (existingBtns.length !== S.pickers.length) {
+      // ★ 처음 빌드 또는 pickers 변경 시 전체 재빌드
+      var html = '';
+      for (var i = 0; i < S.pickers.length; i++) {
+        var p = S.pickers[i];
+        var col = S.colors[p] || '#00d4ff';
+        var safe = p.replace(/'/g, "\\'");
+        var st = S.workerStatus[p] || 'offline';
+        var stLabel = stLabelMap[st] || stLabelMap.offline;
+        html += '<button class="pc" data-n="' + p + '" onclick="App.pick(\'' + safe + '\')">'
+              + '<span class="pc-status ' + st + '"></span>'
+              + '<div class="pc-dot" style="background:' + col + ';box-shadow:0 0 8px ' + col + '66;"></div>'
+              + '<div class="pc-name">' + p + '</div>'
+              + '<div class="pc-status-label ' + st + '">' + stLabel + '</div>'
+              + '</button>';
+      }
+      g.innerHTML = html;
+    } else {
+      // ★ 이미 빌드된 경우: 상태가 바뀐 카드만 업데이트 (깜빡임/선택 초기화 방지)
+      for (var j = 0; j < existingBtns.length; j++) {
+        var btn = existingBtns[j];
+        var name = btn.dataset.n;
+        var newSt = S.workerStatus[name] || 'offline';
+        var dotEl = btn.querySelector('.pc-status');
+        var lblEl = btn.querySelector('.pc-status-label');
+        if (dotEl) {
+          var curClass = dotEl.className.replace('pc-status', '').trim();
+          if (curClass !== newSt) {
+            // ★ 상태가 변경된 카드만 DOM 업데이트
+            dotEl.className = 'pc-status ' + newSt;
+            if (lblEl) {
+              lblEl.className = 'pc-status-label ' + newSt;
+              lblEl.textContent = stLabelMap[newSt] || stLabelMap.offline;
+            }
+          }
+        }
+      }
     }
-    g.innerHTML = html;
+
+    // 선택 상태 복원 (선택한 이름 유지)
     if (S.me) {
-      var btn = g.querySelector('.pc[data-n="' + S.me + '"]');
-      if (btn) btn.classList.add('sel');
+      var selBtn = g.querySelector('.pc[data-n="' + S.me + '"]');
+      if (selBtn && !selBtn.classList.contains('sel')) selBtn.classList.add('sel');
     }
   },
 
