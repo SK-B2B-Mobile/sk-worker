@@ -7,7 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#07101f">
   <title>SK Worker</title>
-  <!-- Google Fonts removed: using system fonts for reliability -->
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     :root {
@@ -39,6 +38,8 @@
     .brand-h { font-size:40px; font-weight:900; line-height:1; text-align:center; margin-bottom:7px; background:linear-gradient(135deg,#fff 25%,var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
     .brand-sub { font-size:15px; color:var(--sub); margin-bottom:44px; }
     .sec-lbl { width:100%; max-width:440px; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+    /* 상태 갱신 시간 표시 */
+    .status-refresh-info { width:100%; max-width:440px; font-size:11px; color:var(--muted); text-align:right; margin-bottom:6px; }
     .pgrid { width:100%; max-width:440px; display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
     .pc { display:flex; flex-direction:column; align-items:center; gap:10px; padding:18px 14px; background:var(--card); border:2px solid var(--line); border-radius:16px; cursor:pointer; transition:border-color .15s,background .15s,box-shadow .15s; position:relative; }
     .pc.sel { border-color:var(--cyan); background:rgba(0,212,255,.07); box-shadow:0 0 0 1px var(--cyan),0 6px 22px rgba(0,212,255,.2); }
@@ -126,12 +127,9 @@
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
     .syn-txt { font-size:14px; color:var(--sub); }
     .ref-btn { background:none; border:none; color:var(--cyan); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:15px; font-weight:700; cursor:pointer; padding:0; }
-    /* 작업시간 (Completed) */
     .dur-bar { padding:10px 16px; background:rgba(0,212,255,.06); border-top:1px solid rgba(0,212,255,.15); display:flex; align-items:center; justify-content:space-between; }
     .dur-lbl { font-size:12px; font-weight:700; color:var(--cyan); letter-spacing:.5px; text-transform:uppercase; }
     .dur-val { font-family:'SF Mono',Consolas,monospace; font-size:18px; font-weight:700; color:var(--cyan); }
-
-    /* 검색바 */
     .search-bar { padding:10px 14px; background:var(--card); border-bottom:1px solid var(--line); }
     .search-input { width:100%; padding:11px 16px 11px 40px; background:var(--card2); border:1.5px solid var(--line); border-radius:12px; color:#fff; font-size:15px; font-family:-apple-system,sans-serif; outline:none; box-sizing:border-box; }
     .search-input:focus { border-color:var(--cyan); }
@@ -140,8 +138,6 @@
     .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:16px; color:var(--muted); pointer-events:none; }
     .search-clear { position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--muted); cursor:pointer; display:none; }
     .search-result-count { font-size:11px; color:var(--sub); margin-top:6px; padding-left:2px; }
-
-    /* 카드 접기/펼치기 */
     .jcard-body { display:none; }
     .jcard.open .jcard-body { display:block; }
     .jch { cursor:pointer; }
@@ -161,8 +157,9 @@
 <div class="page off" id="pgLogin">
   <div class="brand-tag">StyleKorean</div>
   <div class="brand-h">B2B Fulfillment</div>
-  <div class="brand-sub">Worker Portal · v5.0</div>
+  <div class="brand-sub">Worker Portal · v5.1</div>
   <div class="sec-lbl">Select Your Name</div>
+  <div class="status-refresh-info" id="statusRefreshInfo">Checking status...</div>
   <div class="pgrid" id="pgrid"></div>
   <button class="go-btn" id="goBtn" onclick="App.login()" disabled>Start My Shift →</button>
 </div>
@@ -195,7 +192,7 @@
   <div class="search-bar" id="searchBar" style="display:none">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input class="search-input" id="searchInput" type="text" placeholder="Search invoice #, remarks..." 
+      <input class="search-input" id="searchInput" type="text" placeholder="Search invoice #, remarks, picker name..."
              oninput="App.onSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
       <span class="search-clear" id="searchClear" onclick="App.clearSearch()">✕</span>
     </div>
@@ -212,46 +209,92 @@
 <script>
 const GAS = 'https://script.google.com/macros/s/AKfycbykK9DWjem9ORHxfR_mpdZl5DVh-en0D6JpCdIuel305QmfqxoNU_NqSnjkhFk401hI/exec';
 const FB_PICK = ['Ryan','Jane','Henry','Nicole'];
-const TIMEOUT = 20000; // GAS cold start 대비 20초
+const TIMEOUT = 20000;
+
+// ★ 근무 시간 설정
+const WORK_SEGMENTS = [
+  { start: 8*60+30,  end: 12*60     }, // 08:30 ~ 12:00
+  { start: 13*60,    end: 17*60+30  }  // 13:00 ~ 17:30
+];
 
 // ══════════════════════════════════════════════════════════
-//  NETWORK LAYER — GitHub Pages에서 실행 시 fetch 정상 작동
-//  fetch → XHR → JSONP 순서로 시도
+//  ★ 근무 시간만 계산하는 함수 (점심/퇴근 후 제외)
 // ══════════════════════════════════════════════════════════
+function calcWorkingMins(startISO, endISO) {
+  try {
+    const start = new Date(startISO);
+    const end   = endISO ? new Date(endISO) : new Date();
+    if (isNaN(start) || end <= start) return 0;
 
+    let totalMins = 0;
+    let cur = new Date(start);
+
+    // 최대 14일치만 계산 (무한루프 방지)
+    const maxDays = 14;
+    let dayCount = 0;
+
+    while (cur < end && dayCount < maxDays) {
+      const dayBase = new Date(cur);
+      dayBase.setHours(0, 0, 0, 0);
+
+      const nextDay = new Date(dayBase);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      // 이 날의 실제 범위: cur ~ min(end, nextDay)
+      const rangeStart = cur;
+      const rangeEnd   = end < nextDay ? end : nextDay;
+
+      // 분 단위로 변환 (자정 기준)
+      const fromMins = (rangeStart - dayBase) / 60000;
+      const toMins   = (rangeEnd   - dayBase) / 60000;
+
+      // 각 근무 세그먼트와 겹치는 부분 합산
+      for (const seg of WORK_SEGMENTS) {
+        const oStart = Math.max(fromMins, seg.start);
+        const oEnd   = Math.min(toMins,   seg.end);
+        if (oEnd > oStart) totalMins += (oEnd - oStart);
+      }
+
+      cur = nextDay;
+      dayCount++;
+    }
+
+    return Math.floor(totalMins);
+  } catch(e) {
+    return 0;
+  }
+}
+
+function fmtWorkMins(mins) {
+  if (mins <= 0) return '0 min';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m} min`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  NETWORK LAYER
+// ══════════════════════════════════════════════════════════
 let _jsonpCounter = 0;
 
 function netGet(url) {
-  // fetch 먼저 시도 (GitHub Pages HTTPS 환경에서 정상 작동)
-  return fetchGet(url)
-    .catch(() => xhrGet(url))
-    .catch(() => jsonpGet(url));
+  return fetchGet(url).catch(() => xhrGet(url)).catch(() => jsonpGet(url));
 }
 
 function jsonpGet(url) {
   return new Promise((res, rej) => {
     const cbName = '__jsonp_' + (++_jsonpCounter) + '_' + Date.now();
-    const timer = setTimeout(() => {
-      cleanup();
-      rej(new Error('jsonp timeout'));
-    }, TIMEOUT);
-
+    const timer = setTimeout(() => { cleanup(); rej(new Error('jsonp timeout')); }, TIMEOUT);
     function cleanup() {
       clearTimeout(timer);
       try { delete window[cbName]; } catch(e) {}
       const s = document.getElementById(cbName);
       if (s && s.parentNode) s.parentNode.removeChild(s);
     }
-
-    window[cbName] = function(data) {
-      cleanup();
-      res(data);
-    };
-
+    window[cbName] = function(data) { cleanup(); res(data); };
     const script = document.createElement('script');
     script.id = cbName;
     script.onerror = () => { cleanup(); rej(new Error('jsonp error')); };
-    // Append callback param to URL
     const sep = url.includes('?') ? '&' : '?';
     script.src = url + sep + 'callback=' + cbName;
     document.head.appendChild(script);
@@ -286,11 +329,8 @@ function fetchGet(url) {
   });
 }
 
-// POST 저장 함수
 function netPost(data) {
   const body = new URLSearchParams({ op: 'upsertJob', data: JSON.stringify(data) }).toString();
-
-  // 1st: fetch POST
   return fetch(GAS, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -298,7 +338,6 @@ function netPost(data) {
   })
   .then(r => r.json())
   .catch(() => {
-    // 2nd: XHR POST
     return new Promise((res, rej) => {
       const x = new XMLHttpRequest();
       const t = setTimeout(() => { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
@@ -311,7 +350,6 @@ function netPost(data) {
     });
   })
   .catch(() => {
-    // 3rd: JSONP GET (iOS 최후 수단)
     const url = GAS + '?op=upsertJob&data=' + encodeURIComponent(JSON.stringify(data));
     return jsonpGet(url).catch(() => ({}));
   });
@@ -364,8 +402,14 @@ function tOpts(sel) {
 // ══════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════
-const S = { me:null, tab:'mine', jobs:[], pickers:FB_PICK, colors:{}, timer:null, elTimer:null, searchQuery:'', openCards:new Set(), workerStatus:{} };
+const S = {
+  me:null, tab:'mine', jobs:[], pickers:FB_PICK, colors:{},
+  timer:null, elTimer:null, loginTimer:null,
+  searchQuery:'', openCards:new Set(), workerStatus:{},
+  lastStatusUpdate: null
+};
 const $ = id => document.getElementById(id);
+
 function ov(show, msg) {
   var el = document.getElementById('ov');
   if (show) { el.style.display='flex'; if(msg) document.getElementById('ovTxt').textContent=msg; }
@@ -391,7 +435,6 @@ function setSyn(s) {
 const App = {
 
   init() {
-    // 항상 로그인 화면 먼저 표시 (자동 로그인 없음)
     let saved = null;
     try {
       const cachedSettings = localStorage.getItem('sk_settings');
@@ -405,7 +448,6 @@ const App = {
 
     this.buildGrid();
 
-    // 이전에 선택한 이름만 표시 (버튼 선택 상태) - 자동 로그인 안 함
     if (saved && S.pickers.includes(saved)) {
       S.me = saved;
       setTimeout(() => {
@@ -416,11 +458,49 @@ const App = {
       }, 50);
     }
 
-    // 항상 로그인 화면 표시
     showPage('pgLogin');
 
-    // 백그라운드에서 서버 설정 갱신
-    setTimeout(() => { try { this.refreshSettings(); } catch(e) {} }, 500);
+    // 로그인 페이지에서 상태 갱신 시작
+    this.startLoginRefresh();
+
+    // 백그라운드 설정 갱신
+    setTimeout(() => { try { this.refreshSettings(); } catch(e) {} }, 300);
+  },
+
+  // ★ 로그인 페이지 상태 갱신 (15초마다 - 안정적)
+  startLoginRefresh() {
+    clearInterval(S.loginTimer);
+    // 첫 로드는 즉시
+    this.loadStatusOnly();
+    // 이후 15초마다
+    S.loginTimer = setInterval(() => {
+      if (!S.me) {
+        // 로그인 페이지에 있을 때만
+        this.loadStatusOnly();
+      }
+    }, 15000);
+  },
+
+  // ★ 로그인 페이지용: job 데이터만 가져와서 상태 표시 갱신
+  async loadStatusOnly() {
+    try {
+      const d = await netGet(`${GAS}?op=listJobs&t=${Date.now()}`);
+      if (d.ok) {
+        S.jobs = d.jobs || [];
+        if (Array.isArray(d.pickers) && d.pickers.length) {
+          S.pickers = d.pickers;
+          S.colors = d.pickerColors || S.colors;
+        }
+        this.updateWorkerStatus();
+        // 갱신 시간 표시
+        const tm = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        const el = $('statusRefreshInfo');
+        if (el) el.textContent = `Updated ${tm}`;
+      }
+    } catch(e) {
+      const el = $('statusRefreshInfo');
+      if (el) el.textContent = 'Status update failed — retrying...';
+    }
   },
 
   async refreshSettings() {
@@ -429,13 +509,11 @@ const App = {
       if (Array.isArray(d.pickers) && d.pickers.length) {
         S.pickers = d.pickers;
         S.colors = d.pickerColors || {};
-        // 캐시에 저장
         localStorage.setItem('sk_settings', JSON.stringify({pickers: S.pickers, colors: S.colors}));
-        // 로그인 화면이면 picker 목록 갱신
         if (!S.me) this.buildGrid();
       }
     } catch(e) {
-      console.log('Settings refresh failed (non-blocking):', e.message);
+      console.log('Settings refresh failed:', e.message);
     }
   },
 
@@ -453,6 +531,11 @@ const App = {
         <div class="pc-status-label ${st}">${stLabel}</div>
       </button>`;
     }).join('');
+    // 선택 상태 복원
+    if (S.me) {
+      const btn = g.querySelector(`.pc[data-n="${S.me}"]`);
+      if (btn) btn.classList.add('sel');
+    }
   },
 
   updateWorkerStatus() {
@@ -466,9 +549,13 @@ const App = {
         status[picker] = 'working';
       } else if ((st === 'ready' || st === 'idle') && status[picker] !== 'working') {
         status[picker] = 'idle';
+      } else if (st === 'completed' && status[picker] === 'offline') {
+        // 오늘 completed가 있으면 idle (출근은 했음)
+        // 단, 이미 working이면 유지
       }
     });
     S.workerStatus = status;
+    // 로그인 페이지면 그리드 갱신
     if (!S.me) this.buildGrid();
   },
 
@@ -481,6 +568,7 @@ const App = {
   login() {
     if (!S.me) return;
     localStorage.setItem('sk_worker', S.me);
+    clearInterval(S.loginTimer); // 로그인 후 login 타이머 중지
     this.enterMain();
   },
 
@@ -488,9 +576,9 @@ const App = {
     showPage('pgMain');
     $('topDot').textContent = initials(S.me);
     $('topName').textContent = S.me;
-    ov(false); // ★ 오버레이 즉시 제거 (네트워크 기다리지 않음)
+    ov(false);
     this.startTimers();
-    this.load(); // 백그라운드 로드 (await 없음)
+    this.load();
   },
 
   logout() {
@@ -500,6 +588,8 @@ const App = {
     document.querySelectorAll('.pc').forEach(b => b.classList.remove('sel'));
     $('goBtn').disabled = true;
     showPage('pgLogin');
+    // 로그인 페이지 상태 갱신 재시작
+    this.startLoginRefresh();
   },
 
   async load() {
@@ -527,7 +617,6 @@ const App = {
     ['mine','all','done'].forEach(x => {
       $('t'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('on', x===t);
     });
-    // All Jobs, Completed 탭에서만 검색바 표시
     const showSearch = (t === 'all' || t === 'done');
     $('searchBar').style.display = showSearch ? 'block' : 'none';
     this.render();
@@ -563,16 +652,16 @@ const App = {
       return oa!==ob ? oa-ob : (a.shipDate||'').localeCompare(b.shipDate||'');
     });
 
-    // 검색 필터 적용
+    // ★ 검색 필터: 인보이스 + 리마크 + 작업자 이름
     if (S.searchQuery) {
       const q = S.searchQuery.toLowerCase();
-      f = f.filter(j => 
+      f = f.filter(j =>
         (j.invoice||'').toLowerCase().includes(q) ||
-        (j.remarks||'').toLowerCase().includes(q)
+        (j.remarks||'').toLowerCase().includes(q) ||
+        (j.picker||'').toLowerCase().includes(q)   // ★ 작업자 이름 추가
       );
     }
 
-    // 검색 결과 카운트 표시
     if (S.tab !== 'mine' && S.searchQuery) {
       $('searchCount').textContent = f.length + ' result' + (f.length !== 1 ? 's' : '') + ' found';
     } else {
@@ -590,7 +679,6 @@ const App = {
       return;
     }
     el.innerHTML = f.map(j => this.card(j)).join('');
-    // 새로고침 후 이전에 열려있던 카드 상태 복원
     S.openCards.forEach(inv => {
       const card = document.getElementById('card-' + inv);
       if (card) card.classList.add('open');
@@ -605,7 +693,6 @@ const App = {
     const col = S.colors[job.picker]||'#6366f1';
     const inv = job.invoice||'';
 
-    // 카드 헤더 (항상 표시)
     const cardCls = `jcard st-${st}${isMine&&!isD?' mine':''}`;
     const headerHtml = `
       <div class="jch" onclick="App.toggleCard('${inv}')">
@@ -624,7 +711,6 @@ const App = {
         </div>
       </div>`;
 
-    // 카드 바디 (탭하면 펼쳐짐)
     let pickerHtml = '';
     if (isS||isD) {
       pickerHtml = `<div class="prow"><span class="plbl">Picker</span><span class="ptag" style="background:${col}22;color:${col};border:1px solid ${col}44;">${job.picker||'-'}</span></div>`;
@@ -635,16 +721,13 @@ const App = {
 
     let timeHtml = '';
     if (isD) {
-      // 작업시간 계산
+      // ★ 완료된 작업: 실제 근무 시간 계산
       let durHtml = '';
       try {
         if (job.startAtISO && job.endAtISO) {
-          const ms = new Date(job.endAtISO) - new Date(job.startAtISO);
-          if (ms > 0) {
-            const h = Math.floor(ms/3600000);
-            const m = Math.floor((ms%3600000)/60000);
-            const durStr = h > 0 ? h+'h '+m+'m' : m+'m';
-            durHtml = `<div class="dur-bar"><span class="dur-lbl">⏱ Work Duration</span><span class="dur-val">${durStr}</span></div>`;
+          const workMins = calcWorkingMins(job.startAtISO, job.endAtISO);
+          if (workMins > 0) {
+            durHtml = `<div class="dur-bar"><span class="dur-lbl">⏱ Work Duration (excl. lunch)</span><span class="dur-val">${fmtWorkMins(workMins)}</span></div>`;
           }
         }
       } catch(e) {}
@@ -655,9 +738,12 @@ const App = {
       timeHtml = `<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><select class="tsel" id="st-${inv}">${tOpts(job.startTime||'')}</select></div><div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-${inv}">${tOpts(job.endTime||'')}</select></div></div>`;
     }
 
+    // ★ Elapsed: 근무 시간만 계산
     let elapsedHtml = '';
     if (isS && job.startAtISO) {
-      elapsedHtml = `<div class="ebar"><span class="elbl">⏱ Elapsed</span><span class="eval" id="el-${inv}">-</span></div>`;
+      const workMins = calcWorkingMins(job.startAtISO);
+      const elapsedStr = fmtWorkMins(workMins);
+      elapsedHtml = `<div class="ebar"><span class="elbl">⏱ Work Elapsed (excl. lunch/OT)</span><span class="eval" id="el-${inv}">${elapsedStr}</span></div>`;
     }
 
     let actionHtml = '';
@@ -670,7 +756,6 @@ const App = {
       actionHtml = `<div class="arow"><button class="ab ab-start" onclick="App.start('${inv}')" ${!canStart?'disabled':''}>▶ Start</button><button class="ab ab-done" onclick="App.complete('${inv}')">✓ Complete</button></div>`;
     }
 
-    // Started 카드는 기본 열림, 나머지는 닫힘
     const openCls = isS ? ' open' : '';
     return `<div class="${cardCls}${openCls}" id="card-${inv}">
       ${headerHtml}
@@ -684,11 +769,8 @@ const App = {
     const card = document.getElementById('card-' + inv);
     if (card) {
       card.classList.toggle('open');
-      if (card.classList.contains('open')) {
-        S.openCards.add(inv);
-      } else {
-        S.openCards.delete(inv);
-      }
+      if (card.classList.contains('open')) S.openCards.add(inv);
+      else S.openCards.delete(inv);
     }
   },
 
@@ -764,30 +846,27 @@ const App = {
 
   startTimers() {
     clearInterval(S.timer); clearInterval(S.elTimer);
+    // 메인 데이터 동기화: 10초
     S.timer = setInterval(()=>{ if(!document.hidden&&S.me) this.load(); }, 10000);
+    // ★ Elapsed 시간 갱신: 30초마다 (안정적)
     S.elTimer = setInterval(()=>{
       S.jobs.filter(j=>j.status==='started'&&j.startAtISO).forEach(job=>{
         const el=$(`el-${job.invoice}`);
         if(!el) return;
-        const start=new Date(job.startAtISO);
-        const mins=Math.floor((Date.now()-start.getTime())/60000);
-        if(mins<0){el.textContent='0 min';return;}
-        const h=Math.floor(mins/60),m=mins%60;
-        el.textContent=h>0?`${h}h ${m}m`:`${m} min`;
+        const workMins = calcWorkingMins(job.startAtISO);
+        el.textContent = fmtWorkMins(workMins);
       });
-    }, 15000);
+    }, 30000);
   }
 };
 
-// ★ 가장 먼저 실행: 오버레이 즉시 제거 (스크립트 파싱 완료 즉시)
+// 오버레이 안전 제거
 (function() {
   try {
     var ov = document.getElementById('ov');
     if (ov) {
-      // 500ms 내로 init()이 정상 실행되지 않으면 강제로 오버레이 제거
       setTimeout(function() {
         ov.style.display = 'none';
-        // 페이지도 강제 표시
         var login = document.getElementById('pgLogin');
         if (login) { login.classList.remove('off'); login.style.opacity = '1'; }
       }, 2000);
@@ -798,7 +877,6 @@ const App = {
 document.addEventListener('DOMContentLoaded', function() {
   try { App.init(); } catch(e) {
     console.log('Init error:', e);
-    // init() 실패해도 무조건 로그인 화면 표시
     try { document.getElementById('ov').style.display='none'; } catch(x){}
     try {
       document.getElementById('pgLogin').classList.remove('off');
