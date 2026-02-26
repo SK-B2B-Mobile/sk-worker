@@ -7,6 +7,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#07101f">
   <title>SK Worker</title>
+
+  <!-- ★ PWA 설정 -->
+  <link rel="manifest" href="/sk-worker/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SK Worker">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="apple-touch-icon" href="/sk-worker/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/sk-worker/icon-192.png">
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     :root {
@@ -1086,5 +1096,16 @@ document.addEventListener('visibilitychange', function() {
   if (!document.hidden && S.me) App.load();
 });
 </script>
+
+  <!-- ★ Service Worker 등록 (PWA) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sk-worker/sw.js')
+          .then(function(reg) { console.log('SW registered'); })
+          .catch(function(err) { console.log('SW error:', err); });
+      });
+    }
+  </script>
 </body>
 </html>
