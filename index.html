@@ -935,7 +935,7 @@ var App = {
         + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>' + durHtml;
     } else if (isS) {
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
-        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '">' + tOpts(job.endTime || '') + '</select></div></div>';
+        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '" disabled style="opacity:0.4"><option value="">Start 후 입력가능</option></select></div></div>';
     } else {
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><select class="tsel" id="st-' + inv + '">' + tOpts(job.startTime || '') + '</select></div>'
         + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '">' + tOpts(job.endTime || '') + '</select></div></div>';
@@ -989,19 +989,14 @@ var App = {
     var job = null;
     for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
     if (!job) return;
-    if (!job.picker) { toast('Select a picker first', 'err'); return; }
+    if (!job.picker) { toast('⚠ 먼저 작업자 이름을 선택해주세요!', 'err'); return; }
     var elSt = $$('st-' + inv);
     var sel = elSt ? elSt.value : '';
+    if (!sel) { toast('⚠ 스타트 시간을 선택해주세요!', 'err'); return; }
     var now = new Date();
-    var st, sISO;
-    if (sel) {
-      var parts = sel.split(':');
-      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
-      st = sel; sISO = localISO(d);
-    } else {
-      st = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-      sISO = localISO(now);
-    }
+    var parts = sel.split(':');
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
+    var st = sel, sISO = localISO(d);
     job.startTime = st; job.startAtISO = sISO; job.status = 'started';
     this.render();
     toast('Job started ▶', 'ok');
@@ -1015,18 +1010,15 @@ var App = {
     var job = null;
     for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
     if (!job) return;
+    if (!job.picker) { toast('⚠ 먼저 작업자 이름을 선택해주세요!', 'err'); return; }
+    if (!job.startTime) { toast('⚠ 스타트 시간을 먼저 입력하고 Start 버튼을 눌러주세요!', 'err'); return; }
     var elEnd = $$('end-' + inv);
     var sel = elEnd ? elEnd.value : '';
+    if (!sel) { toast('⚠ 앤드 시간을 선택해주세요!', 'err'); return; }
     var now = new Date();
-    var et, eISO;
-    if (sel) {
-      var parts = sel.split(':');
-      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
-      et = sel; eISO = localISO(d);
-    } else {
-      et = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-      eISO = localISO(now);
-    }
+    var parts = sel.split(':');
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
+    var et = sel, eISO = localISO(d);
     job.endTime = et; job.endAtISO = eISO; job.status = 'completed';
     this.render();
     toast('Job completed ✓', 'ok');
