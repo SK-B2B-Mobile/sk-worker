@@ -991,8 +991,9 @@ var App = {
       }
     }
     this.render();
-    // 서버에도 동기화 (빈값이면 picker 초기화)
-    netPost({ invoice:inv, picker:picker })['catch'](function() { toast('Save error', 'err'); });
+    // ★ 빈값이면 '__CLEAR__' 전송 → GAS에서 Picker 컬럼 빈값으로 저장
+    var sendPicker = picker ? picker : '__CLEAR__';
+    netPost({ invoice:inv, picker:sendPicker })['catch'](function() { toast('Save error', 'err'); });
   },
 
   start: function(inv) {
