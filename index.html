@@ -935,11 +935,14 @@ var App = {
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
         + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>' + durHtml;
     } else if (isS) {
+      // ★ started 상태: End Time 항상 활성화 (10초 refresh 후에도 유지)
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
-        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '" disabled style="opacity:0.4"><option value="">Available after Start</option></select></div></div>';
-    } else {
-      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><select class="tsel" id="st-' + inv + '">' + tOpts(job.startTime || '') + '</select></div>'
         + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '">' + tOpts(job.endTime || '') + '</select></div></div>';
+    } else {
+      // ★ idle/ready 상태: 픽커 없으면 Start Time 비활성, End Time은 항상 비활성
+      var stDisabled = !job.picker ? ' disabled style="opacity:0.4"' : '';
+      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><select class="tsel" id="st-' + inv + '"' + stDisabled + '>' + tOpts(job.startTime || '') + '</select></div>'
+        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '" disabled style="opacity:0.4"><option value="">Available after Start</option></select></div></div>';
     }
 
     var elapsedHtml = '';
@@ -1000,13 +1003,6 @@ var App = {
     var st = sel, sISO = localISO(d);
     job.startTime = st; job.startAtISO = sISO; job.status = 'started';
     this.render();
-    // ★ Start 후 End Time select 즉시 활성화
-    var endEl = $$('end-' + inv);
-    if (endEl) {
-      endEl.disabled = false;
-      endEl.style.opacity = '1';
-      endEl.innerHTML = tOpts('');
-    }
     toast('Job started ▶', 'ok');
     netPost({ invoice:inv, startTime:st, startAtISO:sISO, status:'started' })
       ['catch'](function() { toast('Sync error — check connection', 'err'); });
