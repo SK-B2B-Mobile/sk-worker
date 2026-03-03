@@ -668,10 +668,11 @@ var App = {
         var safe = p.replace(/'/g, "\\'");
         var st = S.workerStatus[p] || 'offline';
         var stLabel = stLabelMap[st] || stLabelMap.offline;
+        var _badge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(p) : '';
         html += '<button class="pc" data-n="' + p + '" onclick="App.pick(\'' + safe + '\')">'
               + '<span class="pc-status ' + st + '"></span>'
               + '<div class="pc-dot" style="background:' + col + ';box-shadow:0 0 8px ' + col + '66;"></div>'
-              + '<div class="pc-name">' + p + '</div>'
+              + '<div class="pc-name">' + p + (_badge ? ' <span style="font-size:12px;">' + _badge + '</span>' : '') + '</div>'
               + '<div class="pc-status-label ' + st + '">' + stLabel + '</div>'
               + '</button>';
       }
@@ -914,7 +915,7 @@ var App = {
       var _pickerBadge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(job.picker) : '';
       pickerHtml = '<div class="prow"><span class="plbl">Picker</span>'
         + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;display:inline-flex;flex-direction:column;align-items:center;gap:1px;">'
-        + (_pickerBadge ? '<span style="font-size:14px;line-height:1;">' + _pickerBadge + '</span>' : '')
+        + (_pickerBadge ? '<span style="font-size:11px;line-height:1;">' + _pickerBadge + '</span>' : '')
         + (job.picker || '-') + '</span></div>';
     } else {
       var opts = '<option value="">Select...</option>';
@@ -1313,7 +1314,7 @@ document.addEventListener('visibilitychange', function() {
     // 서버 데이터로 오늘 점수 동기화 (페이지 로드 시)
     syncFromJobs: function(jobs) {
       var today = todayStr();
-      var counts = {}; // { picker: { orders:0, skus:0 } }
+      var counts = {};
 
       for (var i = 0; i < jobs.length; i++) {
         var j = jobs[i];
@@ -1329,20 +1330,26 @@ document.addEventListener('visibilitychange', function() {
       for (var p in counts) {
         var score = counts[p].orders * 1 + counts[p].skus * 0.5;
         var existing = getScore(p);
-        if (score > existing) {
-          setScore(p, score);
-          // ★ 아직 발동 안 된 마일스톤 중 가장 높은 것 발동
-          var fired = getFired(p);
-          for (var k = MILESTONES.length - 1; k >= 0; k--) {
-            var m = MILESTONES[k];
-            if (score >= m.score && fired.indexOf(m.tier) < 0) {
+        if (score > existing) setScore(p, score);
+
+        // ★ 핵심: 점수와 무관하게 항상 qualifying 티어 전부 fired에 저장
+        //    (getBadge가 항상 올바른 뱃지를 표시하도록)
+        var fired = getFired(p);
+        var highestNewTier = null;
+        for (var k = 0; k < MILESTONES.length; k++) {
+          var m = MILESTONES[k];
+          if (score >= m.score) {
+            if (fired.indexOf(m.tier) < 0) {
               setFired(p, m.tier);
-              (function(milestone, picker, s) {
-                setTimeout(function() { fire(milestone, picker, s); }, 800);
-              })(m, p, score);
-              break;
+              highestNewTier = m; // 새로 달성한 티어 중 가장 높은 것 기록
             }
           }
+        }
+        // 새로 달성한 티어가 있으면 가장 높은 것만 애니메이션
+        if (highestNewTier) {
+          (function(milestone, picker, s) {
+            setTimeout(function() { fire(milestone, picker, s); }, 800);
+          })(highestNewTier, p, score);
         }
       }
     },
