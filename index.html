@@ -833,14 +833,16 @@ var App = {
       else { if (st !== 'completed') f.push(j); }
     }
 
-    var ord = { started:0, ready:1, idle:2, '':3 };
+    var truckOrd = { 'TK':1, 'UPS':2, 'PU':3, 'FedEx':4, 'Other':5 };
     f.sort(function(a, b) {
-      var stA = (a.status || '').toLowerCase();
-      var stB = (b.status || '').toLowerCase();
-      var oa = (ord[stA] !== undefined) ? ord[stA] : 3;
-      var ob = (ord[stB] !== undefined) ? ord[stB] : 3;
-      if (oa !== ob) return oa - ob;
-      return (a.shipDate || '').localeCompare(b.shipDate || '');
+      // 1순위: 날짜(shipDate)
+      var dateA = (a.shipDate || '').substring(0, 10);
+      var dateB = (b.shipDate || '').substring(0, 10);
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      // 2순위: Trucking (TK→UPS→PU→FedEx)
+      var ta = truckOrd[a.trucking] || 999;
+      var tb = truckOrd[b.trucking] || 999;
+      return ta - tb;
     });
 
     if (S.searchQuery) {
