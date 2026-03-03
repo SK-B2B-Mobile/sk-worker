@@ -911,8 +911,11 @@ var App = {
 
     var pickerHtml = '';
     if (isS || isD) {
+      var _pickerBadge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(job.picker) : '';
       pickerHtml = '<div class="prow"><span class="plbl">Picker</span>'
-        + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;">' + (job.picker || '-') + '</span></div>';
+        + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;display:inline-flex;flex-direction:column;align-items:center;gap:1px;">'
+        + (_pickerBadge ? '<span style="font-size:14px;line-height:1;">' + _pickerBadge + '</span>' : '')
+        + (job.picker || '-') + '</span></div>';
     } else {
       var opts = '<option value="">Select...</option>';
       for (var pi = 0; pi < S.pickers.length; pi++) {
@@ -1290,7 +1293,22 @@ document.addEventListener('visibilitychange', function() {
     setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, milestone.duration + 300);
   }
 
+  // 피커 뱃지 반환 함수 (외부에서 호출 가능)
+  function getPickerBadge(picker) {
+    if (!picker) return '';
+    var score = getScore(picker);
+    var fired = getFired(picker);
+    // 가장 높은 달성 티어 뱃지 반환
+    for (var i = MILESTONES.length - 1; i >= 0; i--) {
+      if (fired.indexOf(MILESTONES[i].tier) >= 0) {
+        return MILESTONES[i].emoji;
+      }
+    }
+    return '';
+  }
+
   window.CelebrationSystem = {
+    getBadge: getPickerBadge,
 
     // 서버 데이터로 오늘 점수 동기화 (페이지 로드 시)
     syncFromJobs: function(jobs) {
