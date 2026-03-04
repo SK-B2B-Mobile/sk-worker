@@ -624,7 +624,16 @@ var App = {
     var self = this;
     netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
       if (d && d.ok) {
+        // ★ 로컬 pending picker 보존 (GAS 미저장 상태)
+        var pendingPickers = {};
+        for (var pi = 0; pi < S.jobs.length; pi++) {
+          var pj = S.jobs[pi];
+          if (pj.picker && (pj.status||'').toLowerCase() === 'ready') pendingPickers[pj.invoice] = pj.picker;
+        }
         S.jobs = d.jobs || [];
+        for (var ri = 0; ri < S.jobs.length; ri++) {
+          if (!S.jobs[ri].picker && pendingPickers[S.jobs[ri].invoice]) S.jobs[ri].picker = pendingPickers[S.jobs[ri].invoice];
+        }
         if (Array.isArray(d.pickers) && d.pickers.length) {
           S.pickers = d.pickers;
           S.colors = d.pickerColors || S.colors;
@@ -766,7 +775,16 @@ var App = {
     var self = this;
     netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
       if (d && d.ok) {
+        // ★ 로컬 pending picker 보존 (GAS 미저장 상태)
+        var pendingPickers = {};
+        for (var pi = 0; pi < S.jobs.length; pi++) {
+          var pj = S.jobs[pi];
+          if (pj.picker && (pj.status||'').toLowerCase() === 'ready') pendingPickers[pj.invoice] = pj.picker;
+        }
         S.jobs = d.jobs || [];
+        for (var ri = 0; ri < S.jobs.length; ri++) {
+          if (!S.jobs[ri].picker && pendingPickers[S.jobs[ri].invoice]) S.jobs[ri].picker = pendingPickers[S.jobs[ri].invoice];
+        }
         if (Array.isArray(d.pickers) && d.pickers.length) S.pickers = d.pickers;
         S.colors = d.pickerColors || S.colors;
         // 🎉 오늘 완료 건수 동기화
@@ -924,9 +942,10 @@ var App = {
     var pickerHtml = '';
     if (isS || isD) {
       var _pickerBadge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(job.picker) : '';
+      var _pickerName = job.picker || 'Unknown';
       pickerHtml = '<div class="prow"><span class="plbl">Picker</span>'
         + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;display:inline-flex;flex-direction:row;align-items:center;gap:5px;">'
-        + (job.picker || '-')
+        + _pickerName
         + (_pickerBadge ? '<span style="font-size:13px;line-height:1;">' + _pickerBadge + '</span>' : '')
         + '</span></div>';
     } else {
@@ -997,20 +1016,26 @@ var App = {
   },
 
   setPicker: function(inv, picker) {
-    // ★ 빈값(Select...) 선택 시 → 픽커 초기화 (시작 전에만)
+    // picker 선택 시 GAS 저장 안함 → Start Confirm 시 함께 저장
     for (var i = 0; i < S.jobs.length; i++) {
       if (S.jobs[i].invoice === inv) {
         var st = (S.jobs[i].status || '').toLowerCase();
-        // 이미 started/completed 상태면 변경 불가
         if (st === 'started' || st === 'completed') return;
-        S.jobs[i].picker = picker; // 빈값이면 '' 저장 → Select...로 복원
+        S.jobs[i].picker = picker; // 로컬 state만 업데이트
+        break;
+      }
+    }
+    this.render(); // UI만 갱신
+  },
+  cancelPicker: function(inv) {
+    // Start 모달 Cancel → 로컬 picker 초기화 (GAS 호출 없음)
+    for (var i = 0; i < S.jobs.length; i++) {
+      if (S.jobs[i].invoice === inv) {
+        S.jobs[i].picker = '';
         break;
       }
     }
     this.render();
-    // ★ 빈값이면 '__CLEAR__' 전송 → GAS에서 Picker 컬럼 빈값으로 저장
-    var sendPicker = picker ? picker : '__CLEAR__';
-    netPost({ invoice:inv, picker:sendPicker })['catch'](function() { toast('Save error', 'err'); });
   },
 
   start: function(inv) {
@@ -1029,7 +1054,7 @@ var App = {
     job.startTime = st; job.startAtISO = sISO; job.status = 'started';
     this.render();
     toast('Job started ▶ ' + st, 'ok');
-    netPost({ invoice:inv, startTime:st, startAtISO:sISO, status:'started' })
+    netPost({ invoice:inv, picker:job.picker, startTime:st, startAtISO:sISO, status:'started' })
       ['catch'](function() { toast('Sync error — check connection', 'err'); });
     setTimeout(function() { self.load(); }, 9000);
   },
@@ -1402,21 +1427,27 @@ document.addEventListener('visibilitychange', function() {
   </div>
 </div>
 <script>
-function showMobModal(icon,title,sub,color,cb){
+var _mobCancelCb = null;
+function showMobModal(icon,title,sub,color,cb,onCancel){
   document.getElementById('mobModalIcon').textContent=icon;
   document.getElementById('mobModalTitle').textContent=title;
   document.getElementById('mobModalSub').textContent=sub;
   document.getElementById('mobModalYes').style.background=color;
-  document.getElementById('mobModalYes').onclick=function(){ closeMobModal(); cb(); };
+  document.getElementById('mobModalYes').onclick=function(){ _mobCancelCb=null; closeMobModal(); cb(); };
+  _mobCancelCb = onCancel || null;
   var m=document.getElementById('mobModal');
   m.style.display='-webkit-flex';
   m.style.display='flex';
 }
 function closeMobModal(){
   document.getElementById('mobModal').style.display='none';
+  if(_mobCancelCb){ _mobCancelCb(); _mobCancelCb=null; }
 }
 function mobConfirmStart(inv){
-  showMobModal('▶','Ready to start this job?','Current time will be automatically recorded as the Start Time.','#d97706',function(){ App.start(inv); });
+  showMobModal('▶','Ready to start this job?','Current time will be automatically recorded as the Start Time.','#d97706',
+    function(){ App.start(inv); },
+    function(){ App.cancelPicker(inv); } // Cancel → picker 로컬 초기화
+  );
 }
 function mobConfirmComplete(inv){
   showMobModal('✓','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(inv); });
