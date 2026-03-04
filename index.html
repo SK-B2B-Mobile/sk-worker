@@ -925,9 +925,10 @@ var App = {
     if (isS || isD) {
       var _pickerBadge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(job.picker) : '';
       pickerHtml = '<div class="prow"><span class="plbl">Picker</span>'
-        + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;display:inline-flex;flex-direction:column;align-items:center;gap:1px;">'
-        + (_pickerBadge ? '<span style="font-size:11px;line-height:1;">' + _pickerBadge + '</span>' : '')
-        + (job.picker || '-') + '</span></div>';
+        + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;display:inline-flex;flex-direction:row;align-items:center;gap:5px;">'
+        + (job.picker || '-')
+        + (_pickerBadge ? '<span style="font-size:13px;line-height:1;">' + _pickerBadge + '</span>' : '')
+        + '</span></div>';
     } else {
       var opts = '<option value="">Select...</option>';
       for (var pi = 0; pi < S.pickers.length; pi++) {
@@ -972,11 +973,11 @@ var App = {
     if (isD) {
       actionHtml = '<div class="arow"><button class="ab ab-comp">Job Completed</button></div>';
     } else if (isS) {
-      actionHtml = '<div class="arow"><button class="ab ab-done" onclick="showMobModal('✓','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(\''+inv+'\'); })">✓ Complete Job</button></div>';
+      actionHtml = '<div class="arow"><button class="ab ab-done" onclick="mobConfirmComplete(\'' + inv + '\')">✓ Complete Job</button></div>';
     } else {
       var canStart = !!job.picker;
       actionHtml = '<div class="arow">'
-        + '<button class="ab ab-start" onclick="' + (canStart ? 'showMobModal(\'▶\',\'Ready to start this job?\',\'Current time will be automatically recorded as the Start Time.\',\'#d97706\',function(){ App.start(\''+inv+'\'); })' : 'void(0)') + '"' + (!canStart ? ' disabled' : '') + '>▶ Start Job</button></div>';
+        + '<button class="ab ab-start"' + (!canStart ? ' disabled' : ' onclick="mobConfirmStart(\'' + inv + '\')"'  ) + '>▶ Start Job</button></div>';
     }
 
     var openCls = isS ? ' open' : '';
@@ -1413,6 +1414,12 @@ function showMobModal(icon,title,sub,color,cb){
 }
 function closeMobModal(){
   document.getElementById('mobModal').style.display='none';
+}
+function mobConfirmStart(inv){
+  showMobModal('▶','Ready to start this job?','Current time will be automatically recorded as the Start Time.','#d97706',function(){ App.start(inv); });
+}
+function mobConfirmComplete(inv){
+  showMobModal('✓','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(inv); });
 }
 </script>
 </body>
