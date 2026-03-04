@@ -229,6 +229,8 @@
     .ab { -webkit-flex:1; flex:1; padding:15px 8px; border:none; border-radius:14px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:800; cursor:pointer; -webkit-transition:-webkit-transform .12s; transition:transform .12s; -webkit-appearance:none; appearance:none; }
     .ab:active { -webkit-transform:scale(.96); transform:scale(.96); }
     .ab:disabled { opacity:.3; pointer-events:none; }
+    /* Start 버튼은 항상 활성 pulse - picker 없어도 보임 */
+    .ab.ab-start:disabled { opacity:0.8; pointer-events:auto; }
     .ab-start { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; box-shadow:0 4px 16px rgba(245,158,11,.3); position:relative; overflow:visible; }
     .ab-start::after { content:''; position:absolute; inset:-3px; border-radius:17px; animation:mob-ring 1.6s ease-out infinite; pointer-events:none; }
     @keyframes mob-ring { 0%{box-shadow:0 0 0 0 rgba(245,158,11,.75);} 55%{box-shadow:0 0 0 9px rgba(245,158,11,.15);} 100%{box-shadow:0 0 0 15px rgba(245,158,11,0);} }
@@ -996,7 +998,7 @@ var App = {
     } else {
       var canStart = !!job.picker;
       actionHtml = '<div class="arow">'
-        + '<button class="ab ab-start"' + (!canStart ? ' disabled' : ' onclick="mobConfirmStart(\'' + inv + '\')"'  ) + '>▶ Start Job</button></div>';
+        + '<button class="ab ab-start" onclick="' + (canStart ? 'mobConfirmStart(\'' + inv + '\')' : 'mobNudgePicker()') + '">▶ Start Job</button></div>';
     }
 
     var openCls = isS ? ' open' : '';
@@ -1442,6 +1444,14 @@ function showMobModal(icon,title,sub,color,cb,onCancel){
 function closeMobModal(){
   document.getElementById('mobModal').style.display='none';
   if(_mobCancelCb){ _mobCancelCb(); _mobCancelCb=null; }
+}
+function mobNudgePicker(){
+  // 피커 미선택 상태에서 Start 클릭 시 안내
+  var t = document.createElement('div');
+  t.textContent = '⚠ Please select a picker first!';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#d97706;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;z-index:9999;white-space:nowrap;';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2000);
 }
 function mobConfirmStart(inv){
   showMobModal('▶','Ready to start this job?','Current time will be automatically recorded as the Start Time.','#d97706',
