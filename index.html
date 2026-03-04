@@ -229,9 +229,11 @@
     .ab { -webkit-flex:1; flex:1; padding:15px 8px; border:none; border-radius:14px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:800; cursor:pointer; -webkit-transition:-webkit-transform .12s; transition:transform .12s; -webkit-appearance:none; appearance:none; }
     .ab:active { -webkit-transform:scale(.96); transform:scale(.96); }
     .ab:disabled { opacity:.3; pointer-events:none; }
-    .ab-start { background:#ffab00; color:#000; box-shadow:0 4px 16px rgba(255,171,0,.3); }
-    .ab-done { background:#00e676; color:#000; box-shadow:0 4px 16px rgba(0,230,118,.3); }
-    .ab-comp { background:rgba(0,212,255,.12); color:#00d4ff; border:1px solid rgba(0,212,255,.3); }
+    .ab-start { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; box-shadow:0 4px 16px rgba(245,158,11,.3); position:relative; overflow:visible; }
+    .ab-start::after { content:''; position:absolute; inset:-3px; border-radius:17px; animation:mob-ring 1.6s ease-out infinite; pointer-events:none; }
+    @keyframes mob-ring { 0%{box-shadow:0 0 0 0 rgba(245,158,11,.75);} 55%{box-shadow:0 0 0 9px rgba(245,158,11,.15);} 100%{box-shadow:0 0 0 15px rgba(245,158,11,0);} }
+    .ab-done { background:linear-gradient(135deg,#10b981,#059669); color:#fff; box-shadow:0 4px 16px rgba(16,185,129,.3); }
+    .ab-comp { background:transparent; color:#34d399; border:1.5px solid rgba(16,185,129,.45); cursor:default; }
     .empty { padding:50px 24px; text-align:center; color:#7a93b8; }
     .eico { font-size:48px; margin-bottom:14px; }
     .etit { font-size:17px; font-weight:700; color:#ffffff; margin-bottom:8px; }
@@ -952,12 +954,12 @@ var App = {
     } else if (isS) {
       // ★ started 상태: End Time 항상 활성화 (10초 refresh 후에도 유지)
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
-        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '">' + tOpts(job.endTime || '') + '</select></div></div>';
+        + '<div class="tbl"><div class="tlbl">End Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">Auto-fill on Complete</div></div></div>';
     } else {
       // ★ idle/ready 상태: 픽커 없으면 Start Time 비활성, End Time은 항상 비활성
       var stDisabled = !job.picker ? ' disabled style="opacity:0.4"' : '';
-      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><select class="tsel" id="st-' + inv + '"' + stDisabled + '>' + tOpts(job.startTime || '') + '</select></div>'
-        + '<div class="tbl"><div class="tlbl">End Time</div><select class="tsel" id="end-' + inv + '" disabled style="opacity:0.4"><option value="">Available after Start</option></select></div></div>';
+      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">' + (job.picker ? '-- auto on Start --' : 'Select picker first') + '</div></div>'
+        + '<div class="tbl"><div class="tlbl">End Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">Available after Start</div></div></div>';
     }
 
     var elapsedHtml = '';
@@ -968,14 +970,13 @@ var App = {
 
     var actionHtml = '';
     if (isD) {
-      actionHtml = '<div class="arow"><button class="ab ab-comp" disabled>✓ Completed</button></div>';
+      actionHtml = '<div class="arow"><button class="ab ab-comp">Job Completed</button></div>';
     } else if (isS) {
-      actionHtml = '<div class="arow"><button class="ab ab-done" onclick="App.complete(\'' + inv + '\')">✓ Complete Job</button></div>';
+      actionHtml = '<div class="arow"><button class="ab ab-done" onclick="showMobModal('✓','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(\''+inv+'\'); })">✓ Complete Job</button></div>';
     } else {
       var canStart = !!job.picker;
       actionHtml = '<div class="arow">'
-        + '<button class="ab ab-start" onclick="App.start(\'' + inv + '\')"' + (!canStart ? ' disabled' : '') + '>▶ Start</button>'
-        + '<button class="ab ab-done" onclick="App.complete(\'' + inv + '\')">✓ Complete</button></div>';
+        + '<button class="ab ab-start" onclick="' + (canStart ? 'showMobModal(\'▶\',\'Ready to start this job?\',\'Current time will be automatically recorded as the Start Time.\',\'#d97706\',function(){ App.start(\''+inv+'\'); })' : 'void(0)') + '"' + (!canStart ? ' disabled' : '') + '>▶ Start Job</button></div>';
     }
 
     var openCls = isS ? ' open' : '';
@@ -1016,17 +1017,17 @@ var App = {
     var job = null;
     for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
     if (!job) return;
-    if (!job.picker) { toast('⚠ 먼저 작업자 이름을 선택해주세요!', 'err'); return; }
-    var elSt = $$('st-' + inv);
-    var sel = elSt ? elSt.value : '';
-    if (!sel) { toast('⚠ 스타트 시간을 선택해주세요!', 'err'); return; }
+    if (!job.picker) { toast('⚠ Please select a picker first!', 'err'); return; }
+    // 현재시각 자동 입력
     var now = new Date();
-    var parts = sel.split(':');
-    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
-    var st = sel, sISO = localISO(d);
+    var h = String(now.getHours()).padStart ? String(now.getHours()).padStart(2,'0') : (now.getHours()<10?'0':'')+now.getHours();
+    var m = String(now.getMinutes()).padStart ? String(now.getMinutes()).padStart(2,'0') : (now.getMinutes()<10?'0':'')+now.getMinutes();
+    var st = h + ':' + m;
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+    var sISO = localISO(d);
     job.startTime = st; job.startAtISO = sISO; job.status = 'started';
     this.render();
-    toast('Job started ▶', 'ok');
+    toast('Job started ▶ ' + st, 'ok');
     netPost({ invoice:inv, startTime:st, startAtISO:sISO, status:'started' })
       ['catch'](function() { toast('Sync error — check connection', 'err'); });
     setTimeout(function() { self.load(); }, 9000);
@@ -1037,20 +1038,20 @@ var App = {
     var job = null;
     for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
     if (!job) return;
-    if (!job.picker) { toast('⚠ 먼저 작업자 이름을 선택해주세요!', 'err'); return; }
-    if (!job.startTime) { toast('⚠ 스타트 시간을 먼저 입력하고 Start 버튼을 눌러주세요!', 'err'); return; }
-    var elEnd = $$('end-' + inv);
-    var sel = elEnd ? elEnd.value : '';
-    if (!sel) { toast('⚠ 앤드 시간을 선택해주세요!', 'err'); return; }
+    if (!job.picker) { toast('⚠ Please select a picker first!', 'err'); return; }
+    if (!job.startTime) { toast('⚠ Please press Start first!', 'err'); return; }
+    // 현재시각 자동 입력
     var now = new Date();
-    var parts = sel.split(':');
-    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0], +parts[1]);
-    var et = sel, eISO = localISO(d);
+    var h = String(now.getHours()).padStart ? String(now.getHours()).padStart(2,'0') : (now.getHours()<10?'0':'')+now.getHours();
+    var m = String(now.getMinutes()).padStart ? String(now.getMinutes()).padStart(2,'0') : (now.getMinutes()<10?'0':'')+now.getMinutes();
+    var et = h + ':' + m;
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+    var eISO = localISO(d);
     job.endTime = et; job.endAtISO = eISO; job.status = 'completed';
     var celebSku = job.skuCount || 0;
     this.render();
-    toast('Job completed ✓', 'ok');
-    // 🎉 셀러브레이션 체크 (건수 × 1점 + SKU × 0.5점)
+    toast('Job completed ✓ ' + et, 'ok');
+    // 🎉 셀러브레이션 체크
     if (window.CelebrationSystem && S.me) window.CelebrationSystem.onComplete(S.me, celebSku);
     netPost({ invoice:inv, endTime:et, endAtISO:eISO, status:'completed' })
       ['catch'](function() { toast('Sync error — check connection', 'err'); });
@@ -1385,6 +1386,34 @@ document.addEventListener('visibilitychange', function() {
     }
   };
 })();
+</script>
+
+<!-- ── Auto-time Confirm Modal ── -->
+<div id="mobModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;display:none;">
+  <div style="background:#111d35;border:1px solid #1e3550;border-radius:16px;padding:28px 28px;text-align:center;min-width:270px;max-width:340px;margin:0 16px;">
+    <div id="mobModalIcon" style="font-size:40px;margin-bottom:12px;">▶</div>
+    <div id="mobModalTitle" style="font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:6px;">Ready to start this job?</div>
+    <div id="mobModalSub" style="font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.6;">Current time will be automatically recorded as the Start Time.</div>
+    <div style="display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;">
+      <button onclick="closeMobModal()" style="padding:11px 24px;border-radius:9px;border:1px solid #1e3550;background:transparent;color:#94a3b8;font-size:14px;font-weight:600;-webkit-appearance:none;">Cancel</button>
+      <button id="mobModalYes" style="padding:11px 24px;border-radius:9px;border:none;color:#fff;font-size:14px;font-weight:700;background:#d97706;-webkit-appearance:none;">Confirm</button>
+    </div>
+  </div>
+</div>
+<script>
+function showMobModal(icon,title,sub,color,cb){
+  document.getElementById('mobModalIcon').textContent=icon;
+  document.getElementById('mobModalTitle').textContent=title;
+  document.getElementById('mobModalSub').textContent=sub;
+  document.getElementById('mobModalYes').style.background=color;
+  document.getElementById('mobModalYes').onclick=function(){ closeMobModal(); cb(); };
+  var m=document.getElementById('mobModal');
+  m.style.display='-webkit-flex';
+  m.style.display='flex';
+}
+function closeMobModal(){
+  document.getElementById('mobModal').style.display='none';
+}
 </script>
 </body>
 </html>
