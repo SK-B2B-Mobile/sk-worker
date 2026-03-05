@@ -32,11 +32,8 @@
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
       -webkit-font-smoothing:antialiased;
       overscroll-behavior:none;
-      /* ★ iOS 검정화면 방지 */
       -webkit-overflow-scrolling:touch;
     }
-
-    /* ★ inset:0 → top/left/right/bottom으로 변경 (구형 iOS 호환) */
     .page {
       position:fixed;
       top:0; left:0; right:0; bottom:0;
@@ -45,14 +42,16 @@
       -webkit-flex-direction:column;
       flex-direction:column;
       background:#07101f;
-      /* ★ visibility 사용 (opacity만 쓰면 iOS에서 렌더링 버그) */
       -webkit-transition:opacity .2s;
       transition:opacity .2s;
+      /* ★ 기본 상태: 보임 */
+      opacity:1;
+      visibility:visible;
+      pointer-events:auto;
     }
     .page.off {
       opacity:0;
       pointer-events:none;
-      /* ★ iOS에서 visibility:hidden 추가로 완전히 숨김 */
       visibility:hidden;
     }
     .page.on {
@@ -127,7 +126,6 @@
     .sec-lbl { width:100%; max-width:440px; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#4d6080; margin-bottom:14px; }
     .status-refresh-info { width:100%; max-width:440px; font-size:11px; color:#4d6080; text-align:right; margin-bottom:6px; }
     .pgrid { width:100%; max-width:440px; display:-webkit-flex; display:flex; -webkit-flex-wrap:wrap; flex-wrap:wrap; gap:10px; margin-bottom:28px; }
-    /* ★ grid → flex로 변경 (iOS 9 호환) */
     .pc {
       width:calc(50% - 5px);
       display:-webkit-flex;
@@ -145,7 +143,6 @@
       -webkit-transition:border-color .15s,background .15s,box-shadow .15s;
       transition:border-color .15s,background .15s,box-shadow .15s;
       position:relative;
-      /* ★ button 기본 스타일 제거 (iOS) */
       -webkit-appearance:none;
       appearance:none;
       text-align:center;
@@ -199,14 +196,6 @@
     .kpi-c { -webkit-flex:1; flex:1; padding:10px 4px; background:#0d1a2d; text-align:center; }
     .kpi-n { font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:20px; font-weight:600; color:#00d4ff; line-height:1; }
     .kpi-l { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#7a93b8; margin-top:3px; }
-    /* Inspection KPI - Completed 탭 전용 */
-    .kpi-insp { display:none; -webkit-flex:1; flex:1; background:#0d1a2d; padding:6px 4px; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:10px; }
-    .kpi-insp.show { display:-webkit-flex; display:flex; }
-    .kpi-insp-total { text-align:center; }
-    .kpi-insp-div { width:1px; height:28px; background:#1a2d48; }
-    .kpi-insp-issues { text-align:center; }
-    .kpi-insp-issues .kpi-n { color:#ef4444; }
-    .kpi-insp-issues .kpi-l { color:#ef4444; opacity:0.7; }
     .jlist { -webkit-flex:1; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:10px 14px 80px; display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; gap:12px; }
     .jlist::-webkit-scrollbar { display:none; }
     .jcard { display:block; background:#0d1a2d; border:1px solid #1a2d48; border-radius:18px; width:100%; box-sizing:border-box; }
@@ -238,7 +227,6 @@
     .ab { -webkit-flex:1; flex:1; padding:15px 8px; border:none; border-radius:14px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:800; cursor:pointer; -webkit-transition:-webkit-transform .12s; transition:transform .12s; -webkit-appearance:none; appearance:none; }
     .ab:active { -webkit-transform:scale(.96); transform:scale(.96); }
     .ab:disabled { opacity:.3; pointer-events:none; }
-    /* Start 버튼은 항상 활성 pulse - picker 없어도 완전히 동일하게 */
     .ab.ab-start:disabled { opacity:1 !important; pointer-events:auto !important; }
     .ab-start { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; box-shadow:0 4px 16px rgba(245,158,11,.3); position:relative; overflow:visible; }
     .ab-start::after { content:''; position:absolute; inset:-3px; border-radius:17px; animation:mob-ring 1.6s ease-out infinite; pointer-events:none; }
@@ -312,15 +300,14 @@
 </head>
 <body>
 
-<!-- ★ 오버레이: 처음부터 숨김 처리 -->
 <div id="ov" style="display:none;">
   <div class="ring"></div>
   <div class="ring-txt" id="ovTxt">Loading...</div>
 </div>
 <div id="toast"></div>
 
-<!-- LOGIN -->
-<div class="page off" id="pgLogin">
+<!-- ★ LOGIN: 'off' 제거 → 기본 상태에서 보임 (JS 오류 시에도 화면 표시) -->
+<div class="page on" id="pgLogin">
   <div class="brand-tag">StyleKorean</div>
   <div class="brand-h">B2B Fulfillment</div>
   <div class="brand-sub">Worker Portal · v5.2</div>
@@ -330,7 +317,7 @@
   <button class="go-btn" id="goBtn" onclick="App.login()" disabled>Start My Shift →</button>
 </div>
 
-<!-- MAIN -->
+<!-- MAIN: 기본 숨김 유지 -->
 <div class="page off" id="pgMain">
   <div class="topbar">
     <div class="top-row">
@@ -341,7 +328,7 @@
           <div class="top-role">Warehouse Worker</div>
         </div>
       </div>
-      <button class="out-btn" onclick="App.logout()">← Sign Out</button>
+      <button class="out-btn" onclick="App.logout()">&#8592; Sign Out</button>
     </div>
     <div class="tabs">
       <button class="tab on" id="tMine" onclick="App.tab('mine')">My Jobs<span class="tbadge" id="tbadge" style="display:none">0</span></button>
@@ -368,10 +355,10 @@
   </div>
   <div class="search-bar" id="searchBar" style="display:none">
     <div class="search-wrap">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon">&#128269;</span>
       <input class="search-input" id="searchInput" type="text" placeholder="Search invoice #, remarks, picker..."
              oninput="App.onSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
-      <span class="search-clear" id="searchClear" onclick="App.clearSearch()">✕</span>
+      <span class="search-clear" id="searchClear" onclick="App.clearSearch()">&#10005;</span>
     </div>
     <div class="search-result-count" id="searchCount"></div>
   </div>
@@ -379,43 +366,20 @@
   <div class="btm">
     <span class="syn-dot" id="synDot"></span>
     <span class="syn-txt" id="synTxt">Ready</span>
-    <button class="ref-btn" onclick="App.load()">Refresh ↻</button>
+    <button class="ref-btn" onclick="App.load()">Refresh &#8635;</button>
   </div>
 </div>
 
 <script>
-// ★ iOS 안전: 즉시 실행 - 페이지가 검정으로 남지 않도록
-(function() {
-  try {
-    // 100ms 안에 pgLogin이 표시되도록 보장
-    setTimeout(function() {
-      var login = document.getElementById('pgLogin');
-      var main  = document.getElementById('pgMain');
-      if (login) {
-        login.classList.remove('off');
-        login.classList.add('on');
-        login.style.cssText = 'opacity:1;visibility:visible;pointer-events:auto;';
-      }
-      if (main) {
-        main.classList.add('off');
-        main.classList.remove('on');
-        main.style.cssText = 'opacity:0;visibility:hidden;pointer-events:none;';
-      }
-    }, 100);
-  } catch(e) {}
-})();
-
 var GAS = 'https://script.google.com/macros/s/AKfycbykK9DWjem9ORHxfR_mpdZl5DVh-en0D6JpCdIuel305QmfqxoNU_NqSnjkhFk401hI/exec';
 var FB_PICK = ['Ryan','Jane','Henry','Nicole'];
 var TIMEOUT = 20000;
 
-// ★ 근무 시간 설정
 var WORK_SEGMENTS = [
   { start: 8*60+30,  end: 12*60     },
   { start: 13*60,    end: 17*60+30  }
 ];
 
-// ★ 근무 시간만 계산 (점심/퇴근 후 제외)
 function calcWorkingMins(startISO, endISO) {
   try {
     var start = new Date(startISO);
@@ -579,7 +543,6 @@ function iConfirm(inv){
   var nq=s.issues.filter(function(x){return !x.q||x.q==='0';});
   if(nq.length){alert('Please enter quantity for all issues.');return;}
   s.done=true; s.dc=false;
-  // GAS 저장
   var payload={invoice:inv, pass:s.issues.length===0, issues:s.issues.map(function(x){return {type:x.t,barcode:x.bc,qty:parseInt(x.q)||0};}), memo:s.memo, inspectedAt:new Date().toISOString()};
   netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);});
   App.list(); App.kpis();
@@ -593,7 +556,6 @@ function buildInspHTML(job) {
   var html = '<div class="insp-wrap">';
 
   if(s.done) {
-    // 결과 표시
     var hasI = s.issues.length>0;
     var items = s.issues.map(function(x){
       return '<div class="res-item"><span class="itag '+x.t+'">'+ILABELS[x.t]+'</span>'
@@ -601,20 +563,19 @@ function buildInspHTML(job) {
         +' &middot; Qty: <strong style="color:'+ICOLORS[x.t]+'">'+x.q+'</strong></div>';
     }).join('');
     html += '<div class="insp-result'+(hasI?' has-iss':'')+'"><div class="res-title">'+(hasI?'&#9888; Issues Recorded':'&#10003; Inspection Passed')+'</div>'+items+(s.memo?'<div class="res-memo">&#128221; '+s.memo+'</div>':'')+'</div>';
-    html += '<button class="btn-edit-insp" onclick="iEdit(''+inv+'')">&#9999;&#65039; Edit Inspection</button>';
+    html += '<button class="btn-edit-insp" onclick="iEdit(\''+inv+'\')">&#9999;&#65039; Edit Inspection</button>';
   } else {
-    // Double Checking 버튼
-    html += '<button class="btn-dblcheck" onclick="iToggleDC(''+inv+'')">&#128300; Double Checking '+(s.dc?'&#9650;':'&#9660;')+'</button>';
+    html += '<button class="btn-dblcheck" onclick="iToggleDC(\''+inv+'\')">&#128300; Double Checking '+(s.dc?'&#9650;':'&#9660;')+'</button>';
     if(s.dc) {
       var entries = s.issues.map(function(x,i){
         return '<div class="iss-entry">'
           +'<div class="iss-head"><span class="itag '+x.t+'">'+ILABELS[x.t]+' - '+INAMES[x.t]+'</span>'
-          +'<button class="rm-btn" onclick="iRemove(''+inv+'','+i+')">&#10005;</button></div>'
+          +'<button class="rm-btn" onclick="iRemove(\''+inv+'\','+i+')">&#10005;</button></div>'
           +'<div class="field-row">'
           +'<div class="field-bc"><div class="flbl">Barcode (last 5 digits)</div>'
-          +'<input class="bc-inp" id="ibc-'+inv+'-'+i+'" maxlength="15" placeholder="e.g. 12345" value="'+x.bc+'" oninput="iSetBC(''+inv+'','+i+',this.value)"></div>'
+          +'<input class="bc-inp" id="ibc-'+inv+'-'+i+'" maxlength="15" placeholder="e.g. 12345" value="'+x.bc+'" oninput="iSetBC(\''+inv+'\','+i+',this.value)"></div>'
           +'<div class="field-qty"><div class="flbl">Qty</div>'
-          +'<input class="qty-inp" type="number" min="1" placeholder="0" value="'+x.q+'" oninput="iSetQ(''+inv+'','+i+',this.value)"></div>'
+          +'<input class="qty-inp" type="number" min="1" placeholder="0" value="'+x.q+'" oninput="iSetQ(\''+inv+'\','+i+',this.value)"></div>'
           +'</div></div>';
       }).join('');
       html += '<div class="dc-panel"><div class="dc-title">&#128300; Double Checking Panel</div>'
@@ -622,12 +583,12 @@ function buildInspHTML(job) {
         +'<option value="exp">&#128308; EXP - Expiration Date</option>'
         +'<option value="oos">&#128993; OOS - Out of Stock</option>'
         +'<option value="nf">&#128995; NF - Not Found</option>'
-        +'</select><button class="btn-add" onclick="iAddIssue(''+inv+'')">+ Add</button></div>'
+        +'</select><button class="btn-add" onclick="iAddIssue(\''+inv+'\')">+ Add</button></div>'
         +entries
-        +'<div class="ni-row"><input type="checkbox" id="ini-'+inv+'" '+(s.ni?'checked':'')+' onchange="iToggleNI(''+inv+'')">'
+        +'<div class="ni-row"><input type="checkbox" id="ini-'+inv+'" '+(s.ni?'checked':'')+' onchange="iToggleNI(\''+inv+'\')">'
         +'<label for="ini-'+inv+'">&#9989; No issues - All OK</label></div>'
-        +'<textarea class="dc-memo" placeholder="&#128221; Notes (optional)..." oninput="iSetMemo(''+inv+'',this.value)">'+s.memo+'</textarea>'
-        +'<button class="btn-confirm" onclick="iConfirm(''+inv+'')">&#10003; Double Checking DONE</button>'
+        +'<textarea class="dc-memo" placeholder="&#128221; Notes (optional)..." oninput="iSetMemo(\''+inv+'\',this.value)">'+s.memo+'</textarea>'
+        +'<button class="btn-confirm" onclick="iConfirm(\''+inv+'\')">&#10003; Double Checking DONE</button>'
         +'</div>';
     }
   }
@@ -637,7 +598,7 @@ function buildInspHTML(job) {
 
 // ══════════════ HELPERS ══════════════
 function localISO(d) {
-  var z = function(n) { return String(n).padStart ? String(n).padStart(2,'0') : (n < 10 ? '0' + n : '' + n); };
+  var z = function(n) { return n < 10 ? '0' + n : '' + n; };
   return d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds());
 }
 function initials(n) {
@@ -661,28 +622,7 @@ function fmtD(r) {
   var p = s.split('-');
   return (p.length === 3 && p[0].length === 4) ? (p[1] + '/' + p[2]) : s;
 }
-function tOpts(sel) {
-  var now = new Date();
-  var sh = now.getHours(), sm = now.getMinutes() - 30;
-  if (sm < 0) { sh--; sm += 60; }
-  sm = Math.floor(sm / 5) * 5;
-  if (sh < 8 || (sh === 8 && sm < 30)) { sh = 8; sm = 30; }
-  var h = '<option value="">-- select --</option>';
-  for (var hr = sh; hr <= 17; hr++) {
-    var s0 = (hr === sh) ? sm : 0;
-    var e0 = (hr === 17) ? 30 : 55;
-    for (var mn = s0; mn <= e0; mn += 5) {
-      var v = pad2(hr) + ':' + pad2(mn);
-      var ap = hr >= 12 ? 'PM' : 'AM';
-      var h12 = hr > 12 ? hr - 12 : (hr === 0 ? 12 : hr);
-      var l = pad2(h12) + ':' + pad2(mn) + ' ' + ap;
-      h += '<option value="' + v + '"' + (sel === v ? ' selected' : '') + '>' + l + '</option>';
-    }
-  }
-  return h;
-}
 
-// ★ localStorage 안전 접근 (iOS Private 브라우징 대응)
 var LS = {
   get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
   set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
@@ -768,9 +708,7 @@ var App = {
       }, 80);
     }
 
-    // ★ 로그인 페이지 표시 (명시적)
     showPage('pgLogin');
-
     this.startLoginRefresh();
 
     var self = this;
@@ -781,7 +719,6 @@ var App = {
     clearInterval(S.loginTimer);
     var self = this;
     this.loadStatusOnly();
-    // ★ 10초마다 갱신 (안정성과 실시간성 균형)
     S.loginTimer = setInterval(function() {
       if (!S.me) self.loadStatusOnly();
     }, 10000);
@@ -791,7 +728,6 @@ var App = {
     var self = this;
     netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
       if (d && d.ok) {
-        // ★ 로컬 pending picker 보존 (GAS 미저장 상태)
         var pendingPickers = {};
         for (var pi = 0; pi < S.jobs.length; pi++) {
           var pj = S.jobs[pi];
@@ -838,7 +774,6 @@ var App = {
     var existingBtns = g.querySelectorAll('.pc');
 
     if (existingBtns.length !== S.pickers.length) {
-      // ★ 처음 빌드 또는 pickers 변경 시 전체 재빌드
       var html = '';
       for (var i = 0; i < S.pickers.length; i++) {
         var p = S.pickers[i];
@@ -856,7 +791,6 @@ var App = {
       }
       g.innerHTML = html;
     } else {
-      // ★ 이미 빌드된 경우: 상태가 바뀐 카드만 업데이트 (깜빡임/선택 초기화 방지)
       for (var j = 0; j < existingBtns.length; j++) {
         var btn = existingBtns[j];
         var name = btn.dataset.n;
@@ -866,7 +800,6 @@ var App = {
         if (dotEl) {
           var curClass = dotEl.className.replace('pc-status', '').trim();
           if (curClass !== newSt) {
-            // ★ 상태가 변경된 카드만 DOM 업데이트
             dotEl.className = 'pc-status ' + newSt;
             if (lblEl) {
               lblEl.className = 'pc-status-label ' + newSt;
@@ -877,7 +810,6 @@ var App = {
       }
     }
 
-    // 선택 상태 복원 (선택한 이름 유지)
     if (S.me) {
       var selBtn = g.querySelector('.pc[data-n="' + S.me + '"]');
       if (selBtn && !selBtn.classList.contains('sel')) selBtn.classList.add('sel');
@@ -942,7 +874,6 @@ var App = {
     var self = this;
     netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
       if (d && d.ok) {
-        // ★ 로컬 pending picker 보존 (GAS 미저장 상태)
         var pendingPickers = {};
         for (var pi = 0; pi < S.jobs.length; pi++) {
           var pj = S.jobs[pi];
@@ -954,7 +885,6 @@ var App = {
         }
         if (Array.isArray(d.pickers) && d.pickers.length) S.pickers = d.pickers;
         S.colors = d.pickerColors || S.colors;
-        // 🎉 오늘 완료 건수 동기화
         if (window.CelebrationSystem) window.CelebrationSystem.syncFromJobs(S.jobs);
       }
       self.render();
@@ -966,7 +896,6 @@ var App = {
 
   tab: function(t) {
     S.tab = t;
-    // KPI 전환: Completed=inspection KPI, 나머지=일반 KPI
     var ni = document.getElementById('kpiInsp');
     var nn = document.getElementById('kpiNormal');
     if (t === 'done') {
@@ -1007,33 +936,27 @@ var App = {
     for (var i = 0; i < j.length; i++) {
       var st = (j[i].status || '').toLowerCase();
       if (j[i].picker === S.me && st !== 'completed') myA++;
-      if (st !== 'completed') pend++; // ★ 미완료 전체 카운트
+      if (st !== 'completed') pend++;
       if (st === 'completed') done++;
     }
     $$('kMy').textContent = myA;
-    // ★ 내가 작업중이면 내 작업 수만큼 빼고, 아니면 전체 미완료 표시
     $$('kPend').textContent = myA > 0 ? Math.max(0, pend - myA) : pend;
     $$('kDone').textContent = done;
     $$('kTot').textContent = j.length;
     var b = $$('tbadge');
     if (myA > 0) { b.style.display = ''; b.textContent = myA; } else { b.style.display = 'none'; }
-    // Inspection KPI
     var kip = $$('kIPend'), kit = $$('kITot'), kii = $$('kIIssues');
-    if(kip) kip.textContent = done;
-    if(kit) kit.textContent = S.jobs.length;
-    // issues count from inspState
-    var issCount = 0;
-    var checkedCount = 0;
+    var issCount = 0, checkedCount = 0;
     if(window.inspState) {
       for(var iv in window.inspState) {
         if(window.inspState[iv].done) { checkedCount++; if(window.inspState[iv].issues && window.inspState[iv].issues.length>0) issCount++; }
       }
     }
     if(kip) kip.textContent = done - checkedCount;
+    if(kit) kit.textContent = j.length;
     if(kii) {
       kii.textContent = issCount;
       kii.style.color = issCount > 0 ? '#ef4444' : '#4a6080';
-      if(kii.parentElement) kii.parentElement.nextElementSibling && (kii.parentElement.style.opacity = issCount>0?'1':'0.5');
     }
   },
 
@@ -1051,17 +974,14 @@ var App = {
     var truckOrd = { 'tk':1, 'ups':2, 'pu':3, 'fedex':4, 'other':5 };
     var statusOrd = { 'started':0, 'ready':1, 'idle':2, '':3 };
     f.sort(function(a, b) {
-      // 1순위: 상태 (STARTED 맨 위)
       var sa = statusOrd[(a.status || '').toLowerCase()];
       var sb = statusOrd[(b.status || '').toLowerCase()];
       if (sa === undefined) sa = 3;
       if (sb === undefined) sb = 3;
       if (sa !== sb) return sa - sb;
-      // 2순위: 날짜(shipDate)
       var dateA = (a.shipDate || '').substring(0, 10);
       var dateB = (b.shipDate || '').substring(0, 10);
       if (dateA !== dateB) return dateA.localeCompare(dateB);
-      // 3순위: Trucking (TK→UPS→PU→FedEx)
       var ta = truckOrd[(a.trucking || '').toLowerCase()] || 999;
       var tb = truckOrd[(b.trucking || '').toLowerCase()] || 999;
       return ta - tb;
@@ -1089,9 +1009,9 @@ var App = {
 
     if (!f.length) {
       var msgsMap = {
-        mine: ['📋','No jobs assigned to you','Jobs assigned to you will appear here'],
-        all:  ['📦','No active jobs','All jobs completed!'],
-        done: ['✅','No completed jobs yet','Completed jobs will appear here']
+        mine: ['&#128203;','No jobs assigned to you','Jobs assigned to you will appear here'],
+        all:  ['&#128230;','No active jobs','All jobs completed!'],
+        done: ['&#9989;','No completed jobs yet','Completed jobs will appear here']
       };
       var m = msgsMap[S.tab] || msgsMap.all;
       el.innerHTML = '<div class="empty"><div class="eico">' + m[0] + '</div><div class="etit">' + m[1] + '</div><div class="esub">' + m[2] + '</div></div>';
@@ -1125,8 +1045,8 @@ var App = {
       + '<div class="jinv">' + inv + '</div>'
       + '<div class="jrem">' + (job.remarks || 'No remarks') + '</div>'
       + '<div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">'
-      + '<span style="font-size:11px;color:#7a93b8;">📅 ' + fmtD(job.shipDate) + '</span>'
-      + '<span style="font-size:11px;color:#00d4ff;">🚚 ' + (job.trucking || '-') + '</span>'
+      + '<span style="font-size:11px;color:#7a93b8;">&#128197; ' + fmtD(job.shipDate) + '</span>'
+      + '<span style="font-size:11px;color:#00d4ff;">&#128666; ' + (job.trucking || '-') + '</span>'
       + '<span style="font-size:11px;color:#7a93b8;">SKU ' + (job.skuCount || 0) + ' / Qty ' + (job.totalQty || 0) + '</span>'
       + '</div></div>'
       + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
@@ -1138,7 +1058,6 @@ var App = {
     if (isS || isD) {
       var _pickerBadge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(job.picker) : '';
       var _pickerName = job.picker || 'Unknown';
-      // Work Duration 계산 (completed 상태일 때만)
       var _durStr = '';
       if (isD && job.startAtISO && job.endAtISO) {
         try {
@@ -1153,7 +1072,7 @@ var App = {
         + _pickerName
         + (_pickerBadge ? '<span style="font-size:13px;line-height:1;">' + _pickerBadge + '</span>' : '')
         + '</span></div>'
-        + (_durStr ? '<span style="font-family:monospace;font-size:14px;font-weight:700;color:#00d4ff;">⏱ ' + _durStr + '</span>' : '')
+        + (_durStr ? '<span style="font-family:monospace;font-size:14px;font-weight:700;color:#00d4ff;">&#9203; ' + _durStr + '</span>' : '')
         + '</div>';
     } else {
       var opts = '<option value="">Select...</option>';
@@ -1172,19 +1091,16 @@ var App = {
         if (job.startAtISO && job.endAtISO) {
           var workMins = calcWorkingMins(job.startAtISO, job.endAtISO);
           if (workMins > 0) {
-            durHtml = '<div class="dur-bar"><span class="dur-lbl">⏱ Work Duration (excl. lunch)</span><span class="dur-val">' + fmtWorkMins(workMins) + '</span></div>';
+            durHtml = '<div class="dur-bar"><span class="dur-lbl">&#9203; Work Duration (excl. lunch)</span><span class="dur-val">' + fmtWorkMins(workMins) + '</span></div>';
           }
         }
       } catch(e) {}
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
-        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>';
+        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>' + durHtml;
     } else if (isS) {
-      // ★ started 상태: End Time 항상 활성화 (10초 refresh 후에도 유지)
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
         + '<div class="tbl"><div class="tlbl">End Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">Auto-fill on Complete</div></div></div>';
     } else {
-      // ★ idle/ready 상태: 픽커 없으면 Start Time 비활성, End Time은 항상 비활성
-      var stDisabled = !job.picker ? ' disabled style="opacity:0.4"' : '';
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">' + (job.picker ? '-- auto on Start --' : 'Select picker first') + '</div></div>'
         + '<div class="tbl"><div class="tlbl">End Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">Available after Start</div></div></div>';
     }
@@ -1192,7 +1108,7 @@ var App = {
     var elapsedHtml = '';
     if (isS && job.startAtISO) {
       var workMinsEl = calcWorkingMins(job.startAtISO);
-      elapsedHtml = '<div class="ebar"><span class="elbl">⏱ Work Elapsed (excl. lunch/OT)</span><span class="eval" id="el-' + inv + '">' + fmtWorkMins(workMinsEl) + '</span></div>';
+      elapsedHtml = '<div class="ebar"><span class="elbl">&#9203; Work Elapsed (excl. lunch/OT)</span><span class="eval" id="el-' + inv + '">' + fmtWorkMins(workMinsEl) + '</span></div>';
     }
 
     var actionHtml = '';
@@ -1206,11 +1122,11 @@ var App = {
       actionHtml = '<div class="arow"><button class="ab ab-comp">Job Completed'+inspBadge+'</button></div>'
         + buildInspHTML(job);
     } else if (isS) {
-      actionHtml = '<div class="arow"><button class="ab ab-done" onclick="mobConfirmComplete(\'' + inv + '\')">✓ Complete Job</button></div>';
+      actionHtml = '<div class="arow"><button class="ab ab-done" onclick="mobConfirmComplete(\'' + inv + '\')">&#10003; Complete Job</button></div>';
     } else {
       var canStart = !!job.picker;
       actionHtml = '<div class="arow">'
-        + '<button class="ab ab-start" onclick="' + (canStart ? 'mobConfirmStart(\'' + inv + '\')' : 'mobNudgePicker()') + '">▶ Start Job</button></div>';
+        + '<button class="ab ab-start" onclick="' + (canStart ? 'mobConfirmStart(\'' + inv + '\')' : 'mobNudgePicker()') + '">&#9654; Start Job</button></div>';
     }
 
     var openCls = isS ? ' open' : '';
@@ -1230,19 +1146,17 @@ var App = {
   },
 
   setPicker: function(inv, picker) {
-    // picker 선택 시 GAS 저장 안함 → Start Confirm 시 함께 저장
     for (var i = 0; i < S.jobs.length; i++) {
       if (S.jobs[i].invoice === inv) {
         var st = (S.jobs[i].status || '').toLowerCase();
         if (st === 'started' || st === 'completed') return;
-        S.jobs[i].picker = picker; // 로컬 state만 업데이트
+        S.jobs[i].picker = picker;
         break;
       }
     }
-    this.render(); // UI만 갱신
+    this.render();
   },
   cancelPicker: function(inv) {
-    // Start 모달 Cancel → 로컬 picker 초기화 (GAS 호출 없음)
     for (var i = 0; i < S.jobs.length; i++) {
       if (S.jobs[i].invoice === inv) {
         S.jobs[i].picker = '';
@@ -1257,17 +1171,15 @@ var App = {
     var job = null;
     for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
     if (!job) return;
-    if (!job.picker) { toast('⚠ Please select a picker first!', 'err'); return; }
-    // 현재시각 자동 입력
+    if (!job.picker) { toast('&#9888; Please select a picker first!', 'err'); return; }
     var now = new Date();
-    var h = String(now.getHours()).padStart ? String(now.getHours()).padStart(2,'0') : (now.getHours()<10?'0':'')+now.getHours();
-    var m = String(now.getMinutes()).padStart ? String(now.getMinutes()).padStart(2,'0') : (now.getMinutes()<10?'0':'')+now.getMinutes();
+    var h = pad2(now.getHours()), m = pad2(now.getMinutes());
     var st = h + ':' + m;
     var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
     var sISO = localISO(d);
     job.startTime = st; job.startAtISO = sISO; job.status = 'started';
     this.render();
-    toast('Job started ▶ ' + st, 'ok');
+    toast('Job started &#9654; ' + st, 'ok');
     netPost({ invoice:inv, picker:job.picker, startTime:st, startAtISO:sISO, status:'started' })
       ['catch'](function() { toast('Sync error — check connection', 'err'); });
     setTimeout(function() { self.load(); }, 9000);
@@ -1278,20 +1190,17 @@ var App = {
     var job = null;
     for (var i = 0; i < S.jobs.length; i++) { if (S.jobs[i].invoice === inv) { job = S.jobs[i]; break; } }
     if (!job) return;
-    if (!job.picker) { toast('⚠ Please select a picker first!', 'err'); return; }
-    if (!job.startTime) { toast('⚠ Please press Start first!', 'err'); return; }
-    // 현재시각 자동 입력
+    if (!job.picker) { toast('&#9888; Please select a picker first!', 'err'); return; }
+    if (!job.startTime) { toast('&#9888; Please press Start first!', 'err'); return; }
     var now = new Date();
-    var h = String(now.getHours()).padStart ? String(now.getHours()).padStart(2,'0') : (now.getHours()<10?'0':'')+now.getHours();
-    var m = String(now.getMinutes()).padStart ? String(now.getMinutes()).padStart(2,'0') : (now.getMinutes()<10?'0':'')+now.getMinutes();
+    var h = pad2(now.getHours()), m = pad2(now.getMinutes());
     var et = h + ':' + m;
     var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
     var eISO = localISO(d);
     job.endTime = et; job.endAtISO = eISO; job.status = 'completed';
     var celebSku = job.skuCount || 0;
     this.render();
-    toast('Job completed ✓ ' + et, 'ok');
-    // 🎉 셀러브레이션 체크
+    toast('Job completed &#10003; ' + et, 'ok');
     if (window.CelebrationSystem && S.me) window.CelebrationSystem.onComplete(S.me, celebSku);
     netPost({ invoice:inv, endTime:et, endAtISO:eISO, status:'completed' })
       ['catch'](function() { toast('Sync error — check connection', 'err'); });
@@ -1331,10 +1240,10 @@ var App = {
   }
 };
 
-// ★ DOMContentLoaded + load 이중 보장 (iOS Safari 대응)
+// ══════════════ START ══════════════
 function startApp() {
   try { App.init(); } catch(e) {
-    // 초기화 실패해도 로그인 화면은 표시
+    console.error('App.init error:', e);
     try { showPage('pgLogin'); } catch(e2) {}
   }
 }
@@ -1342,15 +1251,12 @@ function startApp() {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', startApp);
 } else {
-  // 이미 로드된 경우 (iOS에서 가끔 발생)
   startApp();
 }
 
-// ★ window.load도 백업으로 등록
 window.addEventListener('load', function() {
-  var login = $$('pgLogin');
+  var login = document.getElementById('pgLogin');
   if (login && login.classList.contains('off')) {
-    // 아직 표시 안 됐으면 강제 표시
     try { showPage('pgLogin'); } catch(e) {}
   }
 });
@@ -1360,54 +1266,33 @@ document.addEventListener('visibilitychange', function() {
 });
 </script>
 
-  <!-- ★ Service Worker 등록 (PWA) -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sk-worker/sw.js')
-          .then(function(reg) { console.log('SW registered'); })
-          .catch(function(err) { console.log('SW error:', err); });
-      });
-    }
-  </script>
+<!-- Service Worker -->
 <script>
-
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sk-worker/sw.js')
+      .then(function(reg) { console.log('SW registered'); })
+      .catch(function(err) { console.log('SW error:', err); });
+  });
+}
 </script>
-<script>
-/* ========================================================
-   🎉 DAILY ACHIEVEMENT CELEBRATION SYSTEM v2
-   점수 = 완료건수 × 1점 + 총SKU × 0.5점
-   ⭐ Rising Star 50pt | 🌟 Super Star 80pt | 👑 Legend 110pt
-   매일 자정 자동 리셋
-   ======================================================== */
-(function() {
 
+<!-- 🎉 CELEBRATION SYSTEM -->
+<script>
+(function() {
   var MILESTONES = [
-    { score:50, tier:1, name:'Rising Star',      emoji:'⭐', color:'#FFD700', particleColor:['#FFD700','#FFF8DC','#FFFACD','#ffffff'], shapes:['star'],                   duration:3000 },
-    { score:80, tier:2, name:'Super Star',        emoji:'🌟', color:'#FF8C00', particleColor:['#FF8C00','#FFD700','#FFA500','#ffffff','#FFE4B5'], shapes:['star','circle'], duration:3000 },
-    { score:110, tier:3, name:'Legend of the Day', emoji:'👑', color:'#FFD700', particleColor:['#FFD700','#FF4500','#FF1493','#00FF7F','#1E90FF'], shapes:['crown','star','circle'], duration:5000 }
+    { score:50, tier:1, name:'Rising Star',      emoji:'&#11088;', color:'#FFD700', particleColor:['#FFD700','#FFF8DC','#FFFACD','#ffffff'], shapes:['star'],                   duration:3000 },
+    { score:80, tier:2, name:'Super Star',        emoji:'&#127775;', color:'#FF8C00', particleColor:['#FF8C00','#FFD700','#FFA500','#ffffff','#FFE4B5'], shapes:['star','circle'], duration:3000 },
+    { score:110, tier:3, name:'Legend of the Day', emoji:'&#128081;', color:'#FFD700', particleColor:['#FFD700','#FF4500','#FF1493','#00FF7F','#1E90FF'], shapes:['crown','star','circle'], duration:5000 }
   ];
 
   function todayStr() {
     var d = new Date();
     return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
   }
-
-  // 오늘 점수 가져오기
-  function getScore(picker) {
-    try { return parseFloat(localStorage.getItem('cs_' + picker + '_' + todayStr()) || '0'); } catch(e) { return 0; }
-  }
-
-  // 점수 저장
-  function setScore(picker, score) {
-    try { localStorage.setItem('cs_' + picker + '_' + todayStr(), String(score)); } catch(e) {}
-  }
-
-  // 이미 발동된 티어 목록
-  function getFired(picker) {
-    try { return JSON.parse(localStorage.getItem('cf_' + picker + '_' + todayStr()) || '[]'); } catch(e) { return []; }
-  }
-
+  function getScore(picker) { try { return parseFloat(localStorage.getItem('cs_' + picker + '_' + todayStr()) || '0'); } catch(e) { return 0; } }
+  function setScore(picker, score) { try { localStorage.setItem('cs_' + picker + '_' + todayStr(), String(score)); } catch(e) {} }
+  function getFired(picker) { try { return JSON.parse(localStorage.getItem('cf_' + picker + '_' + todayStr()) || '[]'); } catch(e) { return []; } }
   function setFired(picker, tier) {
     try {
       var f = getFired(picker);
@@ -1415,7 +1300,6 @@ document.addEventListener('visibilitychange', function() {
     } catch(e) {}
   }
 
-  // 파티클 애니메이션
   function runParticles(canvas, milestone) {
     var ctx = canvas.getContext('2d');
     var W = canvas.width, H = canvas.height;
@@ -1427,20 +1311,8 @@ document.addEventListener('visibilitychange', function() {
     var shapes = milestone.shapes;
 
     function makeParticle() {
-      return {
-        x: Math.random() * W,
-        y: Math.random() * -H * 0.5,
-        vx: (Math.random() - 0.5) * 6,
-        vy: Math.random() * 5 + 2,
-        size: Math.random() * 14 + 5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        shape: shapes[Math.floor(Math.random() * shapes.length)],
-        rot: Math.random() * 360,
-        rotV: (Math.random() - 0.5) * 8,
-        alpha: 1
-      };
+      return { x: Math.random() * W, y: Math.random() * -H * 0.5, vx: (Math.random() - 0.5) * 6, vy: Math.random() * 5 + 2, size: Math.random() * 14 + 5, color: colors[Math.floor(Math.random() * colors.length)], shape: shapes[Math.floor(Math.random() * shapes.length)], rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 8, alpha: 1 };
     }
-
     for (var i = 0; i < count; i++) particles.push(makeParticle());
 
     function drawStar(ctx, x, y, r) {
@@ -1459,34 +1331,18 @@ document.addEventListener('visibilitychange', function() {
       var elapsed = Date.now() - start;
       if (elapsed > milestone.duration + 500) return;
       ctx.clearRect(0, 0, W, H);
-
-      if (tier === 3) {
-        var grd = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W/2);
-        grd.addColorStop(0, 'rgba(255,215,0,0.08)');
-        grd.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-      }
-
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         p.x += p.vx; p.y += p.vy; p.rot += p.rotV;
         if (elapsed > milestone.duration * 0.6) p.alpha = Math.max(0, p.alpha - 0.015);
         if (p.y > H + 20) { particles[i] = makeParticle(); continue; }
-
         ctx.save();
         ctx.globalAlpha = p.alpha;
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot * Math.PI / 180);
         ctx.fillStyle = p.color;
-
-        if (p.shape === 'star') {
-          drawStar(ctx, 0, 0, p.size);
-        } else if (p.shape === 'crown') {
-          ctx.font = (p.size * 2) + 'px serif';
-          ctx.fillText('👑', -p.size, p.size * 0.5);
-        } else {
-          ctx.beginPath(); ctx.arc(0, 0, p.size/2, 0, Math.PI*2); ctx.fill();
-        }
+        if (p.shape === 'star') { drawStar(ctx, 0, 0, p.size); }
+        else { ctx.beginPath(); ctx.arc(0, 0, p.size/2, 0, Math.PI*2); ctx.fill(); }
         ctx.restore();
       }
       requestAnimationFrame(animate);
@@ -1497,75 +1353,46 @@ document.addEventListener('visibilitychange', function() {
   function fire(milestone, picker, score) {
     var old = document.getElementById('_celebOverlay');
     if (old) old.parentNode.removeChild(old);
-
     var overlay = document.createElement('div');
     overlay.id = '_celebOverlay';
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;pointer-events:none;';
-
     var canvas = document.createElement('canvas');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
     overlay.appendChild(canvas);
-
-    var tierBg = { 1:'rgba(25,20,0,0.93)', 2:'rgba(30,15,0,0.93)', 3:'rgba(20,15,0,0.95)' };
-
     if (!document.getElementById('_celebStyle')) {
       var style = document.createElement('style');
       style.id = '_celebStyle';
       style.textContent = '@keyframes _celebPop{0%{transform:translate(-50%,-50%) scale(0.4);opacity:0}70%{transform:translate(-50%,-50%) scale(1.06);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}@keyframes _celebFadeOut{0%{opacity:1}100%{opacity:0}}';
       document.head.appendChild(style);
     }
-
     var banner = document.createElement('div');
-    banner.style.cssText = [
-      'position:absolute;top:50%;left:50%;',
-      'transform:translate(-50%,-50%) scale(0.4);',
-      'background:' + tierBg[milestone.tier] + ';',
-      'border:3px solid ' + milestone.color + ';',
-      'border-radius:24px;padding:32px 56px;text-align:center;',
-      'animation:_celebPop 0.55s cubic-bezier(0.175,0.885,0.32,1.275) forwards;',
-      'box-shadow:0 0 80px ' + milestone.color + '55;',
-      'min-width:300px;'
-    ].join('');
-
-    banner.innerHTML = [
-      '<div style="font-size:68px;line-height:1;margin-bottom:6px;">' + milestone.emoji + '</div>',
-      '<div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:1px;">' + picker + '</div>',
-      '<div style="font-size:22px;font-weight:700;color:' + milestone.color + ';margin:8px 0;">' + milestone.name + '!</div>',
-      '<div style="font-size:14px;color:#bbb;margin-top:6px;">🏅 Score: <b style="color:#fff">' + score.toFixed(1) + ' pts</b></div>'
-    ].join('');
-
+    banner.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);background:rgba(20,15,0,0.95);border:3px solid ' + milestone.color + ';border-radius:24px;padding:32px 56px;text-align:center;animation:_celebPop 0.55s cubic-bezier(0.175,0.885,0.32,1.275) forwards;box-shadow:0 0 80px ' + milestone.color + '55;min-width:300px;';
+    banner.innerHTML = '<div style="font-size:68px;line-height:1;margin-bottom:6px;">' + milestone.emoji + '</div>'
+      + '<div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:1px;">' + picker + '</div>'
+      + '<div style="font-size:22px;font-weight:700;color:' + milestone.color + ';margin:8px 0;">' + milestone.name + '!</div>'
+      + '<div style="font-size:14px;color:#bbb;margin-top:6px;">&#127885; Score: <b style="color:#fff">' + score.toFixed(1) + ' pts</b></div>';
     overlay.appendChild(banner);
     document.body.appendChild(overlay);
     runParticles(canvas, milestone);
-
     setTimeout(function() { banner.style.animation = '_celebFadeOut 0.5s ease forwards'; }, milestone.duration - 500);
     setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, milestone.duration + 300);
   }
 
-  // 피커 뱃지 반환 함수 (외부에서 호출 가능)
   function getPickerBadge(picker) {
     if (!picker) return '';
-    var score = getScore(picker);
     var fired = getFired(picker);
-    // 가장 높은 달성 티어 뱃지 반환
     for (var i = MILESTONES.length - 1; i >= 0; i--) {
-      if (fired.indexOf(MILESTONES[i].tier) >= 0) {
-        return MILESTONES[i].emoji;
-      }
+      if (fired.indexOf(MILESTONES[i].tier) >= 0) return MILESTONES[i].emoji;
     }
     return '';
   }
 
   window.CelebrationSystem = {
     getBadge: getPickerBadge,
-
-    // 서버 데이터로 오늘 점수 동기화 (페이지 로드 시)
     syncFromJobs: function(jobs) {
       var today = todayStr();
       var counts = {};
-
       for (var i = 0; i < jobs.length; i++) {
         var j = jobs[i];
         if (String(j.status||'').toLowerCase() !== 'completed') continue;
@@ -1576,26 +1403,18 @@ document.addEventListener('visibilitychange', function() {
         counts[picker].orders += 1;
         counts[picker].skus   += parseInt(j.skuCount || 0, 10);
       }
-
       for (var p in counts) {
         var score = counts[p].orders * 1.5 + counts[p].skus * 0.5;
         var existing = getScore(p);
         if (score > existing) setScore(p, score);
-
-        // ★ 핵심: 점수와 무관하게 항상 qualifying 티어 전부 fired에 저장
-        //    (getBadge가 항상 올바른 뱃지를 표시하도록)
         var fired = getFired(p);
         var highestNewTier = null;
         for (var k = 0; k < MILESTONES.length; k++) {
-          var m = MILESTONES[k];
-          if (score >= m.score) {
-            if (fired.indexOf(m.tier) < 0) {
-              setFired(p, m.tier);
-              highestNewTier = m; // 새로 달성한 티어 중 가장 높은 것 기록
-            }
+          if (score >= MILESTONES[k].score && fired.indexOf(MILESTONES[k].tier) < 0) {
+            setFired(p, MILESTONES[k].tier);
+            highestNewTier = MILESTONES[k];
           }
         }
-        // 새로 달성한 티어가 있으면 가장 높은 것만 애니메이션
         if (highestNewTier) {
           (function(milestone, picker, s) {
             setTimeout(function() { fire(milestone, picker, s); }, 800);
@@ -1603,23 +1422,18 @@ document.addEventListener('visibilitychange', function() {
         }
       }
     },
-
-    // 완료 시 점수 추가 및 셀러브레이션 체크
     onComplete: function(picker, skuCount) {
       if (!picker) return;
       var addScore = 1.5 + (parseInt(skuCount || 0, 10) * 0.5);
       var newScore = getScore(picker) + addScore;
       setScore(picker, newScore);
-
       var fired = getFired(picker);
-      // 높은 단계부터 체크 (가장 높은 미달성 티어 발동)
       for (var i = MILESTONES.length - 1; i >= 0; i--) {
-        var m = MILESTONES[i];
-        if (newScore >= m.score && fired.indexOf(m.tier) < 0) {
-          setFired(picker, m.tier);
+        if (newScore >= MILESTONES[i].score && fired.indexOf(MILESTONES[i].tier) < 0) {
+          setFired(picker, MILESTONES[i].tier);
           (function(milestone, p, s) {
             setTimeout(function() { fire(milestone, p, s); }, 300);
-          })(m, picker, newScore);
+          })(MILESTONES[i], picker, newScore);
           break;
         }
       }
@@ -1628,15 +1442,15 @@ document.addEventListener('visibilitychange', function() {
 })();
 </script>
 
-<!-- ── Auto-time Confirm Modal ── -->
-<div id="mobModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;display:none;">
-  <div style="background:#111d35;border:1px solid #1e3550;border-radius:16px;padding:28px 28px;text-align:center;min-width:270px;max-width:340px;margin:0 16px;">
-    <div id="mobModalIcon" style="font-size:40px;margin-bottom:12px;">▶</div>
+<!-- Modal -->
+<div id="mobModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.78);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#111d35;border:1px solid #1e3550;border-radius:16px;padding:28px;text-align:center;min-width:270px;max-width:340px;margin:0 16px;">
+    <div id="mobModalIcon" style="font-size:40px;margin-bottom:12px;">&#9654;</div>
     <div id="mobModalTitle" style="font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:6px;">Ready to start this job?</div>
     <div id="mobModalSub" style="font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.6;">Current time will be automatically recorded as the Start Time.</div>
-    <div style="display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;">
-      <button onclick="closeMobModal()" style="padding:11px 24px;border-radius:9px;border:1px solid #1e3550;background:transparent;color:#94a3b8;font-size:14px;font-weight:600;-webkit-appearance:none;">Cancel</button>
-      <button id="mobModalYes" style="padding:11px 24px;border-radius:9px;border:none;color:#fff;font-size:14px;font-weight:700;background:#d97706;-webkit-appearance:none;">Confirm</button>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="closeMobModal()" style="padding:11px 24px;border-radius:9px;border:1px solid #1e3550;background:transparent;color:#94a3b8;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="mobModalYes" style="padding:11px 24px;border-radius:9px;border:none;color:#fff;font-size:14px;font-weight:700;background:#d97706;cursor:pointer;">Confirm</button>
     </div>
   </div>
 </div>
@@ -1658,21 +1472,20 @@ function closeMobModal(){
   if(_mobCancelCb){ _mobCancelCb(); _mobCancelCb=null; }
 }
 function mobNudgePicker(){
-  // 피커 미선택 상태에서 Start 클릭 시 안내
   var t = document.createElement('div');
-  t.textContent = '⚠ Please select a picker first!';
+  t.textContent = '&#9888; Please select a picker first!';
   t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#d97706;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;z-index:9999;white-space:nowrap;';
   document.body.appendChild(t);
-  setTimeout(function(){ t.remove(); }, 2000);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2000);
 }
 function mobConfirmStart(inv){
-  showMobModal('▶','Ready to start this job?','Current time will be automatically recorded as the Start Time.','#d97706',
+  showMobModal('&#9654;','Ready to start this job?','Current time will be automatically recorded as the Start Time.','#d97706',
     function(){ App.start(inv); },
-    function(){ App.cancelPicker(inv); } // Cancel → picker 로컬 초기화
+    function(){ App.cancelPicker(inv); }
   );
 }
 function mobConfirmComplete(inv){
-  showMobModal('✓','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(inv); });
+  showMobModal('&#10003;','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(inv); });
 }
 </script>
 </body>
