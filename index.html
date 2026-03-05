@@ -190,14 +190,23 @@
     .top-name { font-size:18px; font-weight:700; }
     .top-role { font-size:13px; color:#7a93b8; }
     .out-btn { padding:9px 15px; background:#111f35; border:1px solid #1a2d48; border-radius:999px; color:#7a93b8; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; -webkit-appearance:none; appearance:none; }
-    .tabs { display:-webkit-flex; display:flex; gap:4px; background:rgba(0,0,0,.25); border-radius:12px; padding:4px; }
-    .tab { -webkit-flex:1; flex:1; padding:8px 4px; border:none; border-radius:9px; background:transparent; color:#7a93b8; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:14px; font-weight:600; cursor:pointer; position:relative; -webkit-transition:background .15s,color .15s; transition:background .15s,color .15s; -webkit-appearance:none; appearance:none; }
-    .tab.on { background:#00d4ff; color:#000; }
+    .tabs { display:-webkit-flex; display:flex; gap:0; background:var(--c2); border-bottom:2px solid #1a2d48; }
+    .tab { -webkit-flex:1; flex:1; padding:11px 4px; border:none; border-bottom:3px solid transparent; background:transparent; color:#4a6a8a; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:13px; font-weight:700; cursor:pointer; position:relative; -webkit-transition:all .18s; transition:all .18s; -webkit-appearance:none; appearance:none; letter-spacing:.2px; text-transform:uppercase; margin-bottom:-2px; }
+    .tab:active { background:rgba(0,212,255,0.06); }
+    .tab.on { color:#00d4ff; border-bottom-color:#00d4ff; background:rgba(0,212,255,0.06); }
     .tbadge { position:absolute; top:3px; right:5px; background:#ff4d6d; color:#fff; font-size:9px; font-weight:800; border-radius:999px; padding:1px 4px; min-width:14px; }
     .kpi-row { -webkit-flex-shrink:0; flex-shrink:0; display:-webkit-flex; display:flex; gap:1px; background:#1a2d48; border-bottom:1px solid #1a2d48; }
     .kpi-c { -webkit-flex:1; flex:1; padding:10px 4px; background:#0d1a2d; text-align:center; }
     .kpi-n { font-family:'SF Mono','Fira Code',Consolas,'Courier New',monospace; font-size:20px; font-weight:600; color:#00d4ff; line-height:1; }
     .kpi-l { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#7a93b8; margin-top:3px; }
+    /* Inspection KPI - Completed 탭 전용 */
+    .kpi-insp { display:none; -webkit-flex:1; flex:1; background:#0d1a2d; padding:6px 4px; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:10px; }
+    .kpi-insp.show { display:-webkit-flex; display:flex; }
+    .kpi-insp-total { text-align:center; }
+    .kpi-insp-div { width:1px; height:28px; background:#1a2d48; }
+    .kpi-insp-issues { text-align:center; }
+    .kpi-insp-issues .kpi-n { color:#ef4444; }
+    .kpi-insp-issues .kpi-l { color:#ef4444; opacity:0.7; }
     .jlist { -webkit-flex:1; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:10px 14px 80px; display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; gap:12px; }
     .jlist::-webkit-scrollbar { display:none; }
     .jcard { display:block; background:#0d1a2d; border:1px solid #1a2d48; border-radius:18px; width:100%; box-sizing:border-box; }
@@ -236,6 +245,41 @@
     @keyframes mob-ring { 0%{box-shadow:0 0 0 0 rgba(245,158,11,.75);} 55%{box-shadow:0 0 0 9px rgba(245,158,11,.15);} 100%{box-shadow:0 0 0 15px rgba(245,158,11,0);} }
     .ab-done { background:linear-gradient(135deg,#10b981,#059669); color:#fff; box-shadow:0 4px 16px rgba(16,185,129,.3); }
     .ab-comp { background:transparent; color:#34d399; border:1.5px solid rgba(16,185,129,.45); cursor:default; }
+    /* ── Inspection UI ── */
+    .insp-wrap { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+    .btn-dblcheck { width:100%; padding:12px; border-radius:10px; border:none; cursor:pointer; font-size:14px; font-weight:700; background:linear-gradient(135deg,#0891b2,#0e7490); color:#fff; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:8px; -webkit-appearance:none; }
+    .dc-panel { background:#0a1a30; border:1px solid #1a3050; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px; }
+    .dc-title { font-size:13px; font-weight:700; color:#00d4ff; }
+    .add-bar { display:-webkit-flex; display:flex; gap:8px; }
+    .add-sel { -webkit-flex:1; flex:1; background:#0d1a2d; border:1px solid #1a3050; border-radius:8px; padding:9px 10px; color:#e2e8f0; font-size:13px; outline:none; -webkit-appearance:none; }
+    .btn-add { background:#00d4ff; color:#000; border:none; border-radius:8px; padding:9px 14px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap; -webkit-appearance:none; }
+    .iss-entry { background:#0d1a2d; border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:7px; }
+    .iss-head { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; }
+    .itag { font-size:11px; font-weight:700; padding:3px 8px; border-radius:5px; }
+    .itag.exp { background:rgba(239,68,68,0.15); color:#ef4444; }
+    .itag.oos { background:rgba(245,158,11,0.15); color:#f59e0b; }
+    .itag.nf  { background:rgba(139,92,246,0.15); color:#8b5cf6; }
+    .rm-btn { background:none; border:none; color:#4a6080; cursor:pointer; font-size:18px; padding:0 4px; line-height:1; }
+    .field-row { display:-webkit-flex; display:flex; gap:8px; -webkit-align-items:flex-end; align-items:flex-end; }
+    .field-bc { -webkit-flex:1; flex:1; }
+    .field-qty { width:72px; flex-shrink:0; }
+    .flbl { font-size:10px; color:#4a6080; margin-bottom:4px; }
+    .bc-inp { width:100%; background:#0a1628; border:1px solid #1a3050; border-radius:7px; padding:8px 10px; color:#e2e8f0; font-size:14px; font-family:monospace; letter-spacing:2px; outline:none; }
+    .bc-inp:focus { border-color:#00d4ff; }
+    .qty-inp { width:100%; background:#0a1628; border:1px solid #1a3050; border-radius:7px; padding:8px 8px; color:#00d4ff; font-size:15px; font-weight:700; text-align:center; outline:none; }
+    .qty-inp:focus { border-color:#00d4ff; }
+    .ni-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:8px; }
+    .ni-row input { width:16px; height:16px; accent-color:#10b981; cursor:pointer; }
+    .ni-row label { font-size:13px; color:#94a3b8; cursor:pointer; }
+    .dc-memo { background:#0d1a2d; border:1px solid #1a3050; border-radius:8px; padding:9px 12px; color:#e2e8f0; font-size:13px; resize:none; width:100%; outline:none; height:65px; }
+    .btn-confirm { width:100%; padding:13px; border-radius:10px; border:none; cursor:pointer; background:linear-gradient(135deg,#059669,#047857); color:#fff; font-size:14px; font-weight:800; -webkit-appearance:none; }
+    .insp-result { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:11px; }
+    .insp-result.has-iss { background:rgba(239,68,68,0.06); border-color:rgba(239,68,68,0.25); }
+    .res-title { font-size:12px; font-weight:700; color:#10b981; margin-bottom:6px; }
+    .insp-result.has-iss .res-title { color:#ef4444; }
+    .res-item { font-size:12px; color:#94a3b8; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:5px; margin-top:4px; }
+    .res-memo { font-size:12px; color:#94a3b8; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05); }
+    .btn-edit-insp { width:100%; padding:10px; border-radius:9px; border:1.5px solid #00d4ff; background:transparent; color:#00d4ff; font-size:13px; font-weight:700; cursor:pointer; -webkit-appearance:none; }
     .empty { padding:50px 24px; text-align:center; color:#7a93b8; }
     .eico { font-size:48px; margin-bottom:14px; }
     .etit { font-size:17px; font-weight:700; color:#ffffff; margin-bottom:8px; }
@@ -305,11 +349,22 @@
       <button class="tab" id="tDone" onclick="App.tab('done')">Completed</button>
     </div>
   </div>
-  <div class="kpi-row">
+  <div class="kpi-row" id="kpiNormal">
     <div class="kpi-c"><div class="kpi-n" id="kMy">0</div><div class="kpi-l">My Active</div></div>
     <div class="kpi-c"><div class="kpi-n" id="kPend">0</div><div class="kpi-l">Pending</div></div>
     <div class="kpi-c"><div class="kpi-n" id="kDone">0</div><div class="kpi-l">Done</div></div>
     <div class="kpi-c"><div class="kpi-n" id="kTot">0</div><div class="kpi-l">Total</div></div>
+  </div>
+  <!-- Inspection 탭 KPI -->
+  <div class="kpi-row" id="kpiInsp" style="display:none;">
+    <div class="kpi-c"><div class="kpi-n" id="kIPend" style="color:#f59e0b;">0</div><div class="kpi-l" style="color:#f59e0b;">Pending</div></div>
+    <div class="kpi-c" style="padding:6px 4px;">
+      <div style="display:-webkit-flex;display:flex;align-items:center;justify-content:center;gap:12px;">
+        <div style="text-align:center;"><div class="kpi-n" id="kITot">0</div><div class="kpi-l">Total</div></div>
+        <div style="width:1px;height:28px;background:#1a2d48;"></div>
+        <div style="text-align:center;"><div class="kpi-n" id="kIIssues" style="color:#4a6080;">0</div><div class="kpi-l" style="color:#4a6080;">&#9888; Issues</div></div>
+      </div>
+    </div>
   </div>
   <div class="search-bar" id="searchBar" style="display:none">
     <div class="search-wrap">
@@ -468,6 +523,116 @@ function netPost(data) {
   })['catch'](function() {
     return jsonpGet(GAS + '?op=upsertJob&data=' + encodeURIComponent(JSON.stringify(data)))['catch'](function() { return {}; });
   });
+}
+
+// ══════════════ INSPECTION SAVE ══════════════
+function netPostInspection(data) {
+  var body = 'op=saveInspection&data=' + encodeURIComponent(JSON.stringify(data));
+  var doFetch = typeof fetch !== 'undefined'
+    ? fetch(GAS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })
+        .then(function() { return {ok:true}; })
+    : Promise.reject(new Error('no fetch'));
+  return doFetch['catch'](function() {
+    return new Promise(function(res) {
+      var x = new XMLHttpRequest();
+      x.open('POST', GAS, true);
+      x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      x.onload = function() { res({ok:true}); };
+      x.onerror = function() { res({ok:false}); };
+      x.send(body);
+    });
+  });
+}
+
+// ══════════════ INSPECTION STATE ══════════════
+window.inspState = {};
+var ILABELS = {exp:'EXP', oos:'OOS', nf:'NF'};
+var INAMES  = {exp:'Expiration Date', oos:'Out of Stock', nf:'Not Found'};
+var ICOLORS = {exp:'#ef4444', oos:'#f59e0b', nf:'#8b5cf6'};
+
+function getIS(inv) {
+  if(!window.inspState[inv]) window.inspState[inv] = {dc:false, issues:[], memo:'', done:false, ni:false};
+  return window.inspState[inv];
+}
+function iAddIssue(inv) {
+  var sel = document.getElementById('isel-'+inv);
+  if(!sel||!sel.value) return;
+  getIS(inv).issues.push({t:sel.value, bc:'', q:''});
+  sel.value='';
+  App.list();
+  setTimeout(function(){
+    var inputs = document.querySelectorAll('[id^="ibc-'+inv+'"]');
+    if(inputs.length) inputs[inputs.length-1].focus();
+  },60);
+}
+function iRemove(inv,idx){ getIS(inv).issues.splice(idx,1); App.list(); }
+function iSetBC(inv,idx,v){ getIS(inv).issues[idx].bc = v.toUpperCase(); }
+function iSetQ(inv,idx,v){ getIS(inv).issues[idx].q = v.replace(/\D/g,''); }
+function iSetMemo(inv,v){ getIS(inv).memo = v; }
+function iToggleNI(inv){ var s=getIS(inv); s.ni=!s.ni; if(s.ni) s.issues=[]; App.list(); }
+function iToggleDC(inv){ var s=getIS(inv); s.dc=!s.dc; App.list(); }
+function iConfirm(inv){
+  var s=getIS(inv);
+  if(!s.ni&&s.issues.length===0){ if(!confirm('No issues recorded. Confirm as PASS?'))return; s.ni=true; }
+  var nb=s.issues.filter(function(x){return x.bc.length<5;});
+  if(nb.length){alert('Please enter at least 5 barcode digits for all issues.');return;}
+  var nq=s.issues.filter(function(x){return !x.q||x.q==='0';});
+  if(nq.length){alert('Please enter quantity for all issues.');return;}
+  s.done=true; s.dc=false;
+  // GAS 저장
+  var payload={invoice:inv, pass:s.issues.length===0, issues:s.issues.map(function(x){return {type:x.t,barcode:x.bc,qty:parseInt(x.q)||0};}), memo:s.memo, inspectedAt:new Date().toISOString()};
+  netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);});
+  App.list(); App.kpis();
+  setTimeout(function(){var e=document.getElementById('card-'+inv);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
+}
+function iEdit(inv){ var s=getIS(inv); s.done=false; s.dc=true; App.list(); App.kpis(); }
+
+function buildInspHTML(job) {
+  var inv = job.invoice;
+  var s = getIS(inv);
+  var html = '<div class="insp-wrap">';
+
+  if(s.done) {
+    // 결과 표시
+    var hasI = s.issues.length>0;
+    var items = s.issues.map(function(x){
+      return '<div class="res-item"><span class="itag '+x.t+'">'+ILABELS[x.t]+'</span>'
+        +' Barcode: <strong style="font-family:monospace;color:'+ICOLORS[x.t]+'">'+x.bc+'</strong>'
+        +' &middot; Qty: <strong style="color:'+ICOLORS[x.t]+'">'+x.q+'</strong></div>';
+    }).join('');
+    html += '<div class="insp-result'+(hasI?' has-iss':'')+'"><div class="res-title">'+(hasI?'&#9888; Issues Recorded':'&#10003; Inspection Passed')+'</div>'+items+(s.memo?'<div class="res-memo">&#128221; '+s.memo+'</div>':'')+'</div>';
+    html += '<button class="btn-edit-insp" onclick="iEdit(''+inv+'')">&#9999;&#65039; Edit Inspection</button>';
+  } else {
+    // Double Checking 버튼
+    html += '<button class="btn-dblcheck" onclick="iToggleDC(''+inv+'')">&#128300; Double Checking '+(s.dc?'&#9650;':'&#9660;')+'</button>';
+    if(s.dc) {
+      var entries = s.issues.map(function(x,i){
+        return '<div class="iss-entry">'
+          +'<div class="iss-head"><span class="itag '+x.t+'">'+ILABELS[x.t]+' - '+INAMES[x.t]+'</span>'
+          +'<button class="rm-btn" onclick="iRemove(''+inv+'','+i+')">&#10005;</button></div>'
+          +'<div class="field-row">'
+          +'<div class="field-bc"><div class="flbl">Barcode (last 5 digits)</div>'
+          +'<input class="bc-inp" id="ibc-'+inv+'-'+i+'" maxlength="15" placeholder="e.g. 12345" value="'+x.bc+'" oninput="iSetBC(''+inv+'','+i+',this.value)"></div>'
+          +'<div class="field-qty"><div class="flbl">Qty</div>'
+          +'<input class="qty-inp" type="number" min="1" placeholder="0" value="'+x.q+'" oninput="iSetQ(''+inv+'','+i+',this.value)"></div>'
+          +'</div></div>';
+      }).join('');
+      html += '<div class="dc-panel"><div class="dc-title">&#128300; Double Checking Panel</div>'
+        +'<div class="add-bar"><select class="add-sel" id="isel-'+inv+'"><option value="">Select issue type...</option>'
+        +'<option value="exp">&#128308; EXP - Expiration Date</option>'
+        +'<option value="oos">&#128993; OOS - Out of Stock</option>'
+        +'<option value="nf">&#128995; NF - Not Found</option>'
+        +'</select><button class="btn-add" onclick="iAddIssue(''+inv+'')">+ Add</button></div>'
+        +entries
+        +'<div class="ni-row"><input type="checkbox" id="ini-'+inv+'" '+(s.ni?'checked':'')+' onchange="iToggleNI(''+inv+'')">'
+        +'<label for="ini-'+inv+'">&#9989; No issues - All OK</label></div>'
+        +'<textarea class="dc-memo" placeholder="&#128221; Notes (optional)..." oninput="iSetMemo(''+inv+'',this.value)">'+s.memo+'</textarea>'
+        +'<button class="btn-confirm" onclick="iConfirm(''+inv+'')">&#10003; Double Checking DONE</button>'
+        +'</div>';
+    }
+  }
+  html += '</div>';
+  return html;
 }
 
 // ══════════════ HELPERS ══════════════
@@ -801,6 +966,16 @@ var App = {
 
   tab: function(t) {
     S.tab = t;
+    // KPI 전환: Completed=inspection KPI, 나머지=일반 KPI
+    var ni = document.getElementById('kpiInsp');
+    var nn = document.getElementById('kpiNormal');
+    if (t === 'done') {
+      if(ni) ni.style.display='';
+      if(nn) nn.style.display='none';
+    } else {
+      if(ni) ni.style.display='none';
+      if(nn) nn.style.display='';
+    }
     S.searchQuery = '';
     S.openCards = {};
     try {
@@ -842,6 +1017,24 @@ var App = {
     $$('kTot').textContent = j.length;
     var b = $$('tbadge');
     if (myA > 0) { b.style.display = ''; b.textContent = myA; } else { b.style.display = 'none'; }
+    // Inspection KPI
+    var kip = $$('kIPend'), kit = $$('kITot'), kii = $$('kIIssues');
+    if(kip) kip.textContent = done;
+    if(kit) kit.textContent = S.jobs.length;
+    // issues count from inspState
+    var issCount = 0;
+    var checkedCount = 0;
+    if(window.inspState) {
+      for(var iv in window.inspState) {
+        if(window.inspState[iv].done) { checkedCount++; if(window.inspState[iv].issues && window.inspState[iv].issues.length>0) issCount++; }
+      }
+    }
+    if(kip) kip.textContent = done - checkedCount;
+    if(kii) {
+      kii.textContent = issCount;
+      kii.style.color = issCount > 0 ? '#ef4444' : '#4a6080';
+      if(kii.parentElement) kii.parentElement.nextElementSibling && (kii.parentElement.style.opacity = issCount>0?'1':'0.5');
+    }
   },
 
   list: function() {
@@ -945,11 +1138,23 @@ var App = {
     if (isS || isD) {
       var _pickerBadge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(job.picker) : '';
       var _pickerName = job.picker || 'Unknown';
-      pickerHtml = '<div class="prow"><span class="plbl">Picker</span>'
+      // Work Duration 계산 (completed 상태일 때만)
+      var _durStr = '';
+      if (isD && job.startAtISO && job.endAtISO) {
+        try {
+          var _wm = calcWorkingMins(job.startAtISO, job.endAtISO);
+          if (_wm > 0) _durStr = fmtWorkMins(_wm);
+        } catch(e) {}
+      }
+      pickerHtml = '<div class="prow" style="justify-content:space-between;">'
+        + '<div style="display:flex;align-items:center;gap:8px;">'
+        + '<span class="plbl">Picker</span>'
         + '<span class="ptag" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '44;display:inline-flex;flex-direction:row;align-items:center;gap:5px;">'
         + _pickerName
         + (_pickerBadge ? '<span style="font-size:13px;line-height:1;">' + _pickerBadge + '</span>' : '')
-        + '</span></div>';
+        + '</span></div>'
+        + (_durStr ? '<span style="font-family:monospace;font-size:14px;font-weight:700;color:#00d4ff;">⏱ ' + _durStr + '</span>' : '')
+        + '</div>';
     } else {
       var opts = '<option value="">Select...</option>';
       for (var pi = 0; pi < S.pickers.length; pi++) {
@@ -972,7 +1177,7 @@ var App = {
         }
       } catch(e) {}
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
-        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>' + durHtml;
+        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>';
     } else if (isS) {
       // ★ started 상태: End Time 항상 활성화 (10초 refresh 후에도 유지)
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
@@ -992,7 +1197,14 @@ var App = {
 
     var actionHtml = '';
     if (isD) {
-      actionHtml = '<div class="arow"><button class="ab ab-comp">Job Completed</button></div>';
+      var inspBadge = '';
+      if(window.inspState && window.inspState[inv]) {
+        var _is = window.inspState[inv];
+        if(_is.done && _is.issues && _is.issues.length>0) inspBadge = ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 7px;border-radius:5px;font-weight:700;">&#9888; Issues</span>';
+        else if(_is.done) inspBadge = ' <span style="font-size:10px;background:rgba(16,185,129,0.15);color:#10b981;padding:2px 7px;border-radius:5px;font-weight:700;">&#10003; Inspected</span>';
+      }
+      actionHtml = '<div class="arow"><button class="ab ab-comp">Job Completed'+inspBadge+'</button></div>'
+        + buildInspHTML(job);
     } else if (isS) {
       actionHtml = '<div class="arow"><button class="ab ab-done" onclick="mobConfirmComplete(\'' + inv + '\')">✓ Complete Job</button></div>';
     } else {
