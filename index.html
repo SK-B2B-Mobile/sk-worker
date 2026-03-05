@@ -239,27 +239,28 @@
     .dc-panel { background:#0a1a30; border:1px solid #1a3050; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px; }
     .dc-title { font-size:13px; font-weight:700; color:#00d4ff; }
     .add-bar { display:-webkit-flex; display:flex; gap:8px; }
-    .add-sel { -webkit-flex:1; flex:1; background:#0d1a2d; border:1px solid #1a3050; border-radius:8px; padding:9px 10px; color:#e2e8f0; font-size:13px; outline:none; -webkit-appearance:none; }
-    .btn-add { background:#00d4ff; color:#000; border:none; border-radius:8px; padding:9px 14px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap; -webkit-appearance:none; }
-    .iss-entry { background:#0d1a2d; border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:7px; }
+    .add-sel { -webkit-flex:1; flex:1; background:#132540; border:2px solid #2a4a70; border-radius:8px; padding:11px 10px; color:#e2e8f0; font-size:14px; font-weight:600; outline:none; -webkit-appearance:none; }
+    .btn-add { background:#00d4ff; color:#000; border:none; border-radius:8px; padding:11px 16px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; -webkit-appearance:none; }
+    .iss-entry { background:#0d1a2d; border:1.5px solid #1e3a5f; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:9px; margin-top:2px; }
     .iss-head { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; }
-    .itag { font-size:11px; font-weight:700; padding:3px 8px; border-radius:5px; }
-    .itag.exp { background:rgba(239,68,68,0.15); color:#ef4444; }
-    .itag.oos { background:rgba(245,158,11,0.15); color:#f59e0b; }
-    .itag.nf  { background:rgba(139,92,246,0.15); color:#8b5cf6; }
-    .rm-btn { background:none; border:none; color:#4a6080; cursor:pointer; font-size:18px; padding:0 4px; line-height:1; }
-    .field-row { display:-webkit-flex; display:flex; gap:8px; -webkit-align-items:flex-end; align-items:flex-end; }
+    .itag { font-size:12px; font-weight:700; padding:4px 10px; border-radius:5px; }
+    .itag.exp { background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.4); }
+    .itag.oos { background:rgba(245,158,11,0.2); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); }
+    .itag.nf  { background:rgba(139,92,246,0.2); color:#8b5cf6; border:1px solid rgba(139,92,246,0.4); }
+    .rm-btn { background:rgba(255,77,109,0.15); border:1px solid rgba(255,77,109,0.3); color:#ff4d6d; cursor:pointer; font-size:16px; padding:4px 8px; line-height:1; border-radius:6px; }
+    .field-row { display:-webkit-flex; display:flex; gap:10px; -webkit-align-items:flex-end; align-items:flex-end; }
     .field-bc { -webkit-flex:1; flex:1; }
-    .field-qty { width:72px; flex-shrink:0; }
-    .flbl { font-size:10px; color:#4a6080; margin-bottom:4px; }
-    .bc-inp { width:100%; background:#0a1628; border:1px solid #1a3050; border-radius:7px; padding:8px 10px; color:#e2e8f0; font-size:14px; font-family:monospace; letter-spacing:2px; outline:none; }
-    .bc-inp:focus { border-color:#00d4ff; }
-    .qty-inp { width:100%; background:#0a1628; border:1px solid #1a3050; border-radius:7px; padding:8px 8px; color:#00d4ff; font-size:15px; font-weight:700; text-align:center; outline:none; }
-    .qty-inp:focus { border-color:#00d4ff; }
-    .ni-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:8px; }
-    .ni-row input { width:16px; height:16px; accent-color:#10b981; cursor:pointer; }
-    .ni-row label { font-size:13px; color:#94a3b8; cursor:pointer; }
-    .dc-memo { background:#0d1a2d; border:1px solid #1a3050; border-radius:8px; padding:9px 12px; color:#e2e8f0; font-size:13px; resize:none; width:100%; outline:none; height:65px; }
+    .field-qty { width:80px; flex-shrink:0; }
+    .flbl { font-size:11px; font-weight:700; color:#7a93b8; margin-bottom:5px; letter-spacing:0.5px; text-transform:uppercase; }
+    .bc-inp { width:100%; background:#0a1628; border:2px solid #2a4a70; border-radius:8px; padding:10px 12px; color:#ffffff; font-size:15px; font-family:monospace; letter-spacing:2px; outline:none; }
+    .bc-inp:focus { border-color:#00d4ff; background:#0d1e38; }
+    .qty-inp { width:100%; background:#0a1628; border:2px solid #2a4a70; border-radius:8px; padding:10px 8px; color:#00d4ff; font-size:17px; font-weight:800; text-align:center; outline:none; }
+    .qty-inp:focus { border-color:#00d4ff; background:#0d1e38; }
+    .ni-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:10px; padding:8px 0; }
+    .ni-row input { width:18px; height:18px; accent-color:#10b981; cursor:pointer; }
+    .ni-row label { font-size:14px; color:#94a3b8; cursor:pointer; font-weight:600; }
+    .dc-memo { background:#0d1a2d; border:2px solid #2a4a70; border-radius:8px; padding:10px 12px; color:#e2e8f0; font-size:14px; resize:none; width:100%; outline:none; height:70px; }
+    .dc-memo:focus { border-color:#00d4ff; }
     .btn-confirm { width:100%; padding:13px; border-radius:10px; border:none; cursor:pointer; background:linear-gradient(135deg,#059669,#047857); color:#fff; font-size:14px; font-weight:800; -webkit-appearance:none; }
     .insp-result { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:11px; }
     .insp-result.has-iss { background:rgba(239,68,68,0.06); border-color:rgba(239,68,68,0.25); }
@@ -492,19 +493,26 @@ function netPost(data) {
 // ══════════════ INSPECTION SAVE ══════════════
 function netPostInspection(data) {
   var body = 'op=saveInspection&data=' + encodeURIComponent(JSON.stringify(data));
+  // ★ no-cors 제거 → 일반 fetch (GAS redirect 정상 추적)
   var doFetch = typeof fetch !== 'undefined'
-    ? fetch(GAS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })
-        .then(function() { return {ok:true}; })
+    ? fetch(GAS, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })
+        .then(function(r) { return r.json(); })
     : Promise.reject(new Error('no fetch'));
   return doFetch['catch'](function() {
-    return new Promise(function(res) {
+    // XHR fallback
+    return new Promise(function(res, rej) {
       var x = new XMLHttpRequest();
+      var t = setTimeout(function() { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
       x.open('POST', GAS, true);
       x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      x.onload = function() { res({ok:true}); };
-      x.onerror = function() { res({ok:false}); };
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:true}); } };
+      x.onerror = function() { clearTimeout(t); rej(new Error('network')); };
+      x.onabort = function() { clearTimeout(t); rej(new Error('aborted')); };
       x.send(body);
     });
+  })['catch'](function() {
+    // JSONP fallback
+    return jsonpGet(GAS + '?op=saveInspection&data=' + encodeURIComponent(JSON.stringify(data)))['catch'](function() { return {}; });
   });
 }
 
@@ -1040,6 +1048,17 @@ var App = {
 
     var cardCls = 'jcard st-' + st + (isMine && !isD ? ' mine' : '');
 
+    // ★ Inspection 배지 - DONE pill 옆에 표시
+    var inspPillBadge = '';
+    if (isD && window.inspState && window.inspState[inv]) {
+      var _is = window.inspState[inv];
+      if (_is.done && _is.issues && _is.issues.length > 0) {
+        inspPillBadge = '<span style="font-size:10px;background:rgba(239,68,68,0.2);color:#ef4444;padding:3px 8px;border-radius:5px;font-weight:700;border:1px solid rgba(239,68,68,0.4);">&#9888; Issues</span>';
+      } else if (_is.done) {
+        inspPillBadge = '<span style="font-size:10px;background:rgba(16,185,129,0.2);color:#10b981;padding:3px 8px;border-radius:5px;font-weight:700;border:1px solid rgba(16,185,129,0.4);">&#10003; Inspected</span>';
+      }
+    }
+
     var headerHtml = '<div class="jch" onclick="App.toggleCard(\'' + inv + '\')">'
       + '<div style="flex:1;min-width:0;">'
       + '<div class="jinv">' + inv + '</div>'
@@ -1050,7 +1069,10 @@ var App = {
       + '<span style="font-size:11px;color:#7a93b8;">SKU ' + (job.skuCount || 0) + ' / Qty ' + (job.totalQty || 0) + '</span>'
       + '</div></div>'
       + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
+      + '<div style="display:flex;align-items:center;gap:5px;">'
+      + (inspPillBadge ? inspPillBadge : '')
       + '<span class="pill ' + pcls + '">' + ptxt + '</span>'
+      + '</div>'
       + '<span class="expand-icon">&#8964;</span>'
       + '</div></div>';
 
@@ -1058,6 +1080,7 @@ var App = {
     if (isS || isD) {
       var _pickerBadge = window.CelebrationSystem ? window.CelebrationSystem.getBadge(job.picker) : '';
       var _pickerName = job.picker || 'Unknown';
+      // ★ Work Duration - Picker 오른쪽에만 표시 (completed일 때)
       var _durStr = '';
       if (isD && job.startAtISO && job.endAtISO) {
         try {
@@ -1086,17 +1109,9 @@ var App = {
 
     var timeHtml = '';
     if (isD) {
-      var durHtml = '';
-      try {
-        if (job.startAtISO && job.endAtISO) {
-          var workMins = calcWorkingMins(job.startAtISO, job.endAtISO);
-          if (workMins > 0) {
-            durHtml = '<div class="dur-bar"><span class="dur-lbl">&#9203; Work Duration (excl. lunch)</span><span class="dur-val">' + fmtWorkMins(workMins) + '</span></div>';
-          }
-        }
-      } catch(e) {}
+      // ★ Work Duration 중복 제거 - durBar 없앰 (Picker 오른쪽에만 표시)
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
-        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>' + durHtml;
+        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>';
     } else if (isS) {
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
         + '<div class="tbl"><div class="tlbl">End Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">Auto-fill on Complete</div></div></div>';
@@ -1113,13 +1128,8 @@ var App = {
 
     var actionHtml = '';
     if (isD) {
-      var inspBadge = '';
-      if(window.inspState && window.inspState[inv]) {
-        var _is = window.inspState[inv];
-        if(_is.done && _is.issues && _is.issues.length>0) inspBadge = ' <span style="font-size:10px;background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 7px;border-radius:5px;font-weight:700;">&#9888; Issues</span>';
-        else if(_is.done) inspBadge = ' <span style="font-size:10px;background:rgba(16,185,129,0.15);color:#10b981;padding:2px 7px;border-radius:5px;font-weight:700;">&#10003; Inspected</span>';
-      }
-      actionHtml = '<div class="arow"><button class="ab ab-comp">Job Completed'+inspBadge+'</button></div>'
+      // ★ Job Completed 버튼에서 배지 제거 (헤더로 이동함)
+      actionHtml = '<div class="arow"><button class="ab ab-comp">Job Completed</button></div>'
         + buildInspHTML(job);
     } else if (isS) {
       actionHtml = '<div class="arow"><button class="ab ab-done" onclick="mobConfirmComplete(\'' + inv + '\')">&#10003; Complete Job</button></div>';
@@ -1226,7 +1236,16 @@ var App = {
     clearInterval(S.timer); clearInterval(S.elTimer);
     var self = this;
     S.timer = setInterval(function() {
-      if (!document.hidden && S.me) self.load();
+      if (!document.hidden && S.me) {
+        // ★ DC 패널(입력 중)이 열려있으면 refresh 스킵 → 입력값 날아가지 않음
+        var dcOpen = false;
+        if (window.inspState) {
+          for (var iv in window.inspState) {
+            if (window.inspState[iv].dc) { dcOpen = true; break; }
+          }
+        }
+        if (!dcOpen) self.load();
+      }
     }, 10000);
     S.elTimer = setInterval(function() {
       for (var i = 0; i < S.jobs.length; i++) {
