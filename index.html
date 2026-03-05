@@ -344,14 +344,33 @@
     <div class="kpi-c"><div class="kpi-n" id="kDone">0</div><div class="kpi-l">Done</div></div>
     <div class="kpi-c"><div class="kpi-n" id="kTot">0</div><div class="kpi-l">Total</div></div>
   </div>
-  <!-- Inspection 탭 KPI -->
-  <div class="kpi-row" id="kpiInsp" style="display:none;">
-    <div class="kpi-c"><div class="kpi-n" id="kIPend" style="color:#f59e0b;">0</div><div class="kpi-l" style="color:#f59e0b;">Pending</div></div>
-    <div class="kpi-c" style="padding:6px 4px;">
-      <div style="display:-webkit-flex;display:flex;align-items:center;justify-content:center;gap:12px;">
-        <div style="text-align:center;"><div class="kpi-n" id="kITot">0</div><div class="kpi-l">Total</div></div>
-        <div style="width:1px;height:28px;background:#1a2d48;"></div>
-        <div style="text-align:center;"><div class="kpi-n" id="kIIssues" style="color:#4a6080;">0</div><div class="kpi-l" style="color:#4a6080;">&#9888; Issues</div></div>
+  <!-- Inspection 탭 KPI - 5칸 완벽 정렬 -->
+  <div id="kpiInsp" style="display:none;border-bottom:1px solid #1a2d48;">
+    <div style="display:flex;min-height:64px;">
+      <!-- PENDING -->
+      <div style="min-width:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border-right:1px solid #1a2d48;">
+        <div class="kpi-n" id="kIPend" style="color:#f59e0b;">0</div>
+        <div class="kpi-l" style="color:#f59e0b;font-size:9px;">PENDING</div>
+      </div>
+      <!-- TOTAL -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border-right:1px solid #1a2d48;">
+        <div class="kpi-n" id="kITot">0</div>
+        <div class="kpi-l" style="font-size:9px;">TOTAL</div>
+      </div>
+      <!-- PASS -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border-right:1px solid #1a2d48;">
+        <div class="kpi-n" id="kIPass" style="color:#4a6080;">0</div>
+        <div class="kpi-l" id="kIPassL" style="color:#4a6080;font-size:9px;">✓ PASS</div>
+      </div>
+      <!-- ISSUES -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border-right:1px solid #1a2d48;">
+        <div class="kpi-n" id="kIIssues" style="color:#4a6080;">0</div>
+        <div class="kpi-l" id="kIIssuesL" style="color:#4a6080;font-size:9px;">⚠ ISSUES</div>
+      </div>
+      <!-- NOT INSP. -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;">
+        <div class="kpi-n" id="kINotInsp" style="color:#4a6080;">0</div>
+        <div class="kpi-l" style="color:#4a6080;font-size:9px;">NOT INSP.</div>
       </div>
     </div>
   </div>
@@ -1015,18 +1034,58 @@ var App = {
     $$('kTot').textContent = j.length;
     var b = $$('tbadge');
     if (myA > 0) { b.style.display = ''; b.textContent = myA; } else { b.style.display = 'none'; }
-    var kip = $$('kIPend'), kit = $$('kITot'), kii = $$('kIIssues');
-    var issCount = 0, checkedCount = 0;
-    if(window.inspState) {
-      for(var iv in window.inspState) {
-        if(window.inspState[iv].done) { checkedCount++; if(window.inspState[iv].issues && window.inspState[iv].issues.length>0) issCount++; }
+    var kip = $$('kIPend'), kit = $$('kITot'), kii = $$('kIIssues'), kiiL = $$('kIIssuesL');
+    var kiPass = $$('kIPass'), kiPassL = $$('kIPassL'), kiNotInsp = $$('kINotInsp');
+    var issCount = 0, passCount = 0, checkedCount = 0;
+
+    // ★ inspState + 서버 inspection 값 모두 반영 (크로스 디바이스 동기화)
+    var serverInspMap = {};
+    for (var si = 0; si < j.length; si++) {
+      var sv = String(j[si].inspection || '').trim();
+      if (sv) serverInspMap[j[si].invoice] = sv;
+    }
+
+    // 완료된 job 기준으로 집계
+    var completedInvoices = {};
+    for (var ci = 0; ci < j.length; ci++) {
+      if ((j[ci].status || '').toLowerCase() === 'completed') {
+        completedInvoices[j[ci].invoice] = true;
       }
     }
-    if(kip) kip.textContent = done - checkedCount;
-    if(kit) kit.textContent = j.length;
-    if(kii) {
+
+    for (var inv in completedInvoices) {
+      var localState = window.inspState && window.inspState[inv];
+      var serverVal  = serverInspMap[inv] || '';
+
+      var isDone   = (localState && localState.done) || (serverVal !== '');
+      var hasIssue = (localState && localState.done && localState.issues && localState.issues.length > 0)
+                  || (serverVal.indexOf('ISSUES') >= 0);
+      var isPass   = (localState && localState.done && (!localState.issues || localState.issues.length === 0))
+                  || (serverVal.indexOf('PASS') >= 0);
+
+      if (isDone) {
+        checkedCount++;
+        if (hasIssue) issCount++;
+        else if (isPass) passCount++;
+      }
+    }
+
+    var notInspCount = Math.max(0, done - checkedCount);
+    if (kip) kip.textContent = Math.max(0, j.length - done); // PENDING = 전체 - 완료
+    if (kit) kit.textContent = done; // TOTAL = 완료
+    if (kiPass) {
+      kiPass.textContent = passCount;
+      kiPass.style.color = passCount > 0 ? '#10b981' : '#4a6080';
+      if (kiPassL) kiPassL.style.color = passCount > 0 ? '#10b981' : '#4a6080';
+    }
+    if (kii) {
       kii.textContent = issCount;
       kii.style.color = issCount > 0 ? '#ef4444' : '#4a6080';
+      if (kiiL) kiiL.style.color = issCount > 0 ? '#ef4444' : '#4a6080';
+    }
+    if (kiNotInsp) {
+      kiNotInsp.textContent = notInspCount;
+      kiNotInsp.style.color = notInspCount > 0 ? '#f59e0b' : '#4a6080';
     }
   },
 
