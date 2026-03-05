@@ -269,6 +269,7 @@
     .res-item { font-size:12px; color:#94a3b8; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:5px; margin-top:4px; }
     .res-memo { font-size:12px; color:#94a3b8; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05); }
     .btn-edit-insp { width:100%; padding:10px; border-radius:9px; border:1.5px solid #00d4ff; background:transparent; color:#00d4ff; font-size:13px; font-weight:700; cursor:pointer; -webkit-appearance:none; }
+    .btn-reset-insp { width:100%; padding:9px; border-radius:9px; border:1.5px solid rgba(255,77,109,0.4); background:rgba(255,77,109,0.07); color:#ff4d6d; font-size:13px; font-weight:700; cursor:pointer; -webkit-appearance:none; margin-top:4px; }
     .empty { padding:50px 24px; text-align:center; color:#7a93b8; }
     .eico { font-size:48px; margin-bottom:14px; }
     .etit { font-size:17px; font-weight:700; color:#ffffff; margin-bottom:8px; }
@@ -516,7 +517,25 @@ function netPostInspection(data) {
   });
 }
 
-// ══════════════ INSPECTION STATE ══════════════
+// ══════════════ INSPECTION CLEAR ══════════════
+function netClearInspection(data) {
+  var body = 'op=clearInspection&data=' + encodeURIComponent(JSON.stringify(data));
+  var doFetch = typeof fetch !== 'undefined'
+    ? fetch(GAS, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })
+        .then(function(r) { return r.json(); })
+    : Promise.reject(new Error('no fetch'));
+  return doFetch['catch'](function() {
+    return new Promise(function(res, rej) {
+      var x = new XMLHttpRequest();
+      var t = setTimeout(function() { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
+      x.open('POST', GAS, true);
+      x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:true}); } };
+      x.onerror = function() { clearTimeout(t); rej(new Error('network')); };
+      x.send(body);
+    });
+  });
+}
 window.inspState = {};
 var ILABELS = {exp:'EXP', oos:'OOS', nf:'NF'};
 var INAMES  = {exp:'Expiration Date', oos:'Out of Stock', nf:'Not Found'};
@@ -558,6 +577,19 @@ function iConfirm(inv){
 }
 function iEdit(inv){ var s=getIS(inv); s.done=false; s.dc=true; App.list(); App.kpis(); }
 
+function iResetInspection(inv){
+  if(!confirm('Reset inspection for ' + inv + '?\nThis will clear the record from Google Sheet.')) return;
+  // 로컬 상태 완전 초기화
+  window.inspState[inv] = {dc:false, issues:[], memo:'', done:false, ni:false};
+  // GAS S열 삭제
+  netClearInspection({invoice:inv})
+    .then(function(r){ 
+      if(r && r.ok) toast('Inspection cleared', 'ok');
+      else toast('Clear failed - check connection', 'err');
+    })['catch'](function(){ toast('Clear failed - check connection', 'err'); });
+  App.list(); App.kpis();
+}
+
 function buildInspHTML(job) {
   var inv = job.invoice;
   var s = getIS(inv);
@@ -572,6 +604,7 @@ function buildInspHTML(job) {
     }).join('');
     html += '<div class="insp-result'+(hasI?' has-iss':'')+'"><div class="res-title">'+(hasI?'&#9888; Issues Recorded':'&#10003; Inspection Passed')+'</div>'+items+(s.memo?'<div class="res-memo">&#128221; '+s.memo+'</div>':'')+'</div>';
     html += '<button class="btn-edit-insp" onclick="iEdit(\''+inv+'\')">&#9999;&#65039; Edit Inspection</button>';
+    html += '<button class="btn-reset-insp" onclick="iResetInspection(\''+inv+'\')">&#128465;&#65039; Reset (Clear All)</button>';
   } else {
     html += '<button class="btn-dblcheck" onclick="iToggleDC(\''+inv+'\')">&#128300; Double Checking '+(s.dc?'&#9650;':'&#9660;')+'</button>';
     if(s.dc) {
