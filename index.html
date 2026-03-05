@@ -244,9 +244,10 @@
     .iss-entry { background:#0d1a2d; border:1.5px solid #1e3a5f; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:9px; margin-top:2px; }
     .iss-head { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; }
     .itag { font-size:12px; font-weight:700; padding:4px 10px; border-radius:5px; }
-    .itag.exp { background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.4); }
-    .itag.oos { background:rgba(245,158,11,0.2); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); }
-    .itag.nf  { background:rgba(139,92,246,0.2); color:#8b5cf6; border:1px solid rgba(139,92,246,0.4); }
+    .itag.exp    { background:rgba(239,68,68,0.2);   color:#ef4444; border:1px solid rgba(239,68,68,0.4); }
+    .itag.oos    { background:rgba(245,158,11,0.2);  color:#f59e0b; border:1px solid rgba(245,158,11,0.4); }
+    .itag.nf     { background:rgba(139,92,246,0.2);  color:#8b5cf6; border:1px solid rgba(139,92,246,0.4); }
+    .itag.cancel { background:rgba(100,116,139,0.2); color:#94a3b8; border:1px solid rgba(100,116,139,0.4); }
     .rm-btn { background:rgba(255,77,109,0.15); border:1px solid rgba(255,77,109,0.3); color:#ff4d6d; cursor:pointer; font-size:16px; padding:4px 8px; line-height:1; border-radius:6px; }
     .field-row { display:-webkit-flex; display:flex; gap:10px; -webkit-align-items:flex-end; align-items:flex-end; }
     .field-bc { -webkit-flex:1; flex:1; }
@@ -568,9 +569,9 @@ function _saveInspState() {
 }
 window.inspState = _loadInspState();
 
-var ILABELS = {exp:'EXP', oos:'OOS', nf:'NF'};
-var INAMES  = {exp:'Expiration Date', oos:'Out of Stock', nf:'Not Found'};
-var ICOLORS = {exp:'#ef4444', oos:'#f59e0b', nf:'#8b5cf6'};
+var ILABELS = {exp:'EXP', oos:'OOS', nf:'NF', cancel:'CANCEL'};
+var INAMES  = {exp:'Expiration Date', oos:'Out of Stock', nf:'Not Found', cancel:'Order Cancelled'};
+var ICOLORS = {exp:'#ef4444', oos:'#f59e0b', nf:'#8b5cf6', cancel:'#64748b'};
 
 function getIS(inv) {
   if(!window.inspState[inv]) window.inspState[inv] = {dc:false, issues:[], memo:'', done:false, ni:false};
@@ -657,6 +658,7 @@ function buildInspHTML(job) {
         +'<option value="exp">&#128308; EXP - Expiration Date</option>'
         +'<option value="oos">&#128993; OOS - Out of Stock</option>'
         +'<option value="nf">&#128995; NF - Not Found</option>'
+        +'<option value="cancel">&#10060; CANCEL - Order Cancelled</option>'
         +'</select><button class="btn-add" onclick="iAddIssue(\''+inv+'\')">+ Add</button></div>'
         +entries
         +'<div class="ni-row"><input type="checkbox" id="ini-'+inv+'" '+(s.ni?'checked':'')+' onchange="iToggleNI(\''+inv+'\')">'
@@ -1108,6 +1110,21 @@ var App = {
       if (sa === undefined) sa = 3;
       if (sb === undefined) sb = 3;
       if (sa !== sb) return sa - sb;
+
+      // ★ COMPLETED 탭: 검수 완료된 건 맨 아래로
+      if (S.tab === 'done') {
+        var aInsp = !!(
+          (window.inspState && window.inspState[a.invoice] && window.inspState[a.invoice].done) ||
+          String(a.inspection || '').trim() !== ''
+        );
+        var bInsp = !!(
+          (window.inspState && window.inspState[b.invoice] && window.inspState[b.invoice].done) ||
+          String(b.inspection || '').trim() !== ''
+        );
+        if (aInsp !== bInsp) return aInsp ? 1 : -1; // 미검수 위, 검수완료 아래
+      }
+
+      // 동일 그룹 내: 날짜 → 트럭킹 순
       var dateA = (a.shipDate || '').substring(0, 10);
       var dateB = (b.shipDate || '').substring(0, 10);
       if (dateA !== dateB) return dateA.localeCompare(dateB);
