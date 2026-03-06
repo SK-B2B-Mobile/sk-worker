@@ -596,11 +596,6 @@ function iToggleNI(inv){ var s=getIS(inv); s.ni=!s.ni; if(s.ni) s.issues=[]; App
 function iToggleDC(inv){
   var s=getIS(inv);
   s.dc=!s.dc;
-  // ★ DC 패널 열릴 때 시작 시간 기록 (처음 열었을 때만)
-  if(s.dc && !s.inspStartAt) {
-    s.inspStartAt = new Date().toISOString();
-    _saveInspState();
-  }
   App.list();
 }
 function iConfirm(inv){
@@ -621,7 +616,6 @@ function iConfirm(inv){
     memo: s.memo,
     inspectedAt: inspEndAt,
     inspector: S.me || '',
-    inspStartAt: s.inspStartAt || inspEndAt,
     inspEndAt: inspEndAt
   };
   _saveInspState(); // ★ localStorage에 즉시 저장
