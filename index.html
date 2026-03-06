@@ -599,6 +599,11 @@ function iToggleDC(inv){
   App.list();
 }
 function iConfirm(inv){
+  // ★ 로그인 확인 - 이름 없으면 저장 불가
+  if(!S.me || S.me.trim() === '') {
+    alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.\n\n검수 완료 전에 반드시 이름을 선택해주세요.');
+    return;
+  }
   var s=getIS(inv);
   if(!s.ni&&s.issues.length===0){ if(!confirm('No issues recorded. Confirm as PASS?'))return; s.ni=true; }
   var nb=s.issues.filter(function(x){return x.bc.length<5;});
@@ -608,6 +613,7 @@ function iConfirm(inv){
   s.done=true; s.dc=false;
   var inspEndAt = new Date().toISOString();
   s.inspEndAt = inspEndAt;
+  s.inspector = S.me; // ★ inspState에도 작업자 이름 저장
   _saveInspState();
   var payload={
     invoice: inv,
@@ -615,10 +621,9 @@ function iConfirm(inv){
     issues: s.issues.map(function(x){return {type:x.t, barcode:x.bc, qty:parseInt(x.q)||0};}),
     memo: s.memo,
     inspectedAt: inspEndAt,
-    inspector: S.me || '',
+    inspector: S.me,
     inspEndAt: inspEndAt
   };
-  _saveInspState(); // ★ localStorage에 즉시 저장
   netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);});
   App.list(); App.kpis();
   setTimeout(function(){var e=document.getElementById('card-'+inv);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
