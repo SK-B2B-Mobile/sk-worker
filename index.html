@@ -235,13 +235,45 @@
     .ab-comp { background:transparent; color:#34d399; border:1.5px solid rgba(16,185,129,.45); cursor:default; }
     /* ── Inspection UI ── */
     .insp-wrap { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
-    .btn-dblcheck { width:100%; padding:12px; border-radius:10px; border:none; cursor:pointer; font-size:14px; font-weight:700; background:linear-gradient(135deg,#0891b2,#0e7490); color:#fff; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:8px; -webkit-appearance:none; }
-    .dc-panel { background:#0a1a30; border:1px solid #1a3050; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px; }
-    .dc-title { font-size:13px; font-weight:700; color:#00d4ff; }
+    /* ★ DC 버튼 - 앰버 오렌지 */
+    .btn-dblcheck { width:100%; padding:14px; border-radius:12px; border:none; cursor:pointer; font-size:14px; font-weight:900; background:linear-gradient(135deg,#f59e0b,#d97706); color:#0a1628; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:8px; -webkit-appearance:none; box-shadow:0 4px 16px rgba(245,158,11,0.35); letter-spacing:0.3px; }
+    .btn-dblcheck:active { transform:scale(0.97); }
+    /* ✓ 바운스 애니메이션 */
+    @keyframes checkBounce { 0%,100%{transform:translateY(0) scale(1);opacity:1;} 30%{transform:translateY(-5px) scale(1.4);opacity:0.8;} 55%{transform:translateY(2px) scale(0.85);opacity:1;} 75%{transform:translateY(-2px) scale(1.1);opacity:1;} }
+    .dc-check-bounce { font-size:17px; font-weight:900; color:#0a1628; animation:checkBounce 1.6s ease-in-out infinite; display:inline-block; flex-shrink:0; }
+
+    /* ★ DC 모달 오버레이 */
+    .dc-overlay { position:fixed; inset:0; z-index:999; background:rgba(4,8,18,0.88); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; -webkit-justify-content:flex-end; justify-content:flex-end; opacity:0; pointer-events:none; transition:opacity 0.2s ease; }
+    .dc-overlay.open { opacity:1; pointer-events:all; }
+    /* 상단 인보이스 바 */
+    .dc-topbar { background:#060e1e; padding:14px 20px; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; border-bottom:1px solid #1a2d48; flex-shrink:0; }
+    .dc-inv-num { font-size:15px; font-weight:800; color:#fbbf24; }
+    .dc-inv-rem { font-size:11px; color:#7a93b8; margin-top:2px; }
+    .dc-close-btn { background:rgba(100,116,139,0.15); border:1px solid rgba(100,116,139,0.3); color:#94a3b8; border-radius:8px; padding:7px 16px; font-size:12px; font-weight:700; cursor:pointer; -webkit-appearance:none; }
+    /* 슬라이드업 패널 */
+    .dc-sheet { background:#0b1a2e; border-radius:20px 20px 0 0; border-top:3px solid #f59e0b; max-height:82vh; overflow-y:auto; -webkit-overflow-scrolling:touch; -webkit-transform:translateY(100%); transform:translateY(100%); transition:-webkit-transform 0.32s cubic-bezier(0.34,1.4,0.64,1); transition:transform 0.32s cubic-bezier(0.34,1.4,0.64,1); flex-shrink:0; }
+    .dc-overlay.open .dc-sheet { -webkit-transform:translateY(0); transform:translateY(0); }
+    .dc-handle { display:-webkit-flex; display:flex; -webkit-justify-content:center; justify-content:center; padding:12px 0 4px; }
+    .dc-handle-bar { width:40px; height:4px; background:#2a3f5a; border-radius:2px; }
+    /* DC 헤더 */
+    .dc-header { background:linear-gradient(135deg,#1a0f00,#2d1a00); border-bottom:1px solid rgba(245,158,11,0.2); padding:14px 20px; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:12px; }
+    .dc-header-badge { background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:8px 12px; font-size:18px; flex-shrink:0; }
+    .dc-header-title { font-size:15px; font-weight:800; color:#fbbf24; }
+    .dc-header-sub { font-size:11px; color:#92681a; margin-top:2px; }
+    /* DC 본문 */
+    .dc-body { padding:16px 20px 32px; display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; gap:12px; }
+    /* Inspector 배지 */
+    .inspector-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:10px; background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.18); border-radius:10px; padding:11px 14px; }
+    .inspector-avatar { width:34px; height:34px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:50%; display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; font-size:12px; font-weight:900; color:#0a1628; flex-shrink:0; }
+    .inspector-label { font-size:10px; color:#92681a; text-transform:uppercase; letter-spacing:0.5px; }
+    .inspector-name { font-size:14px; font-weight:700; color:#fbbf24; margin-top:2px; }
+    /* 패널 내부 공통 */
+    .dc-panel { display:contents; }
+    .dc-title { display:none; }
     .add-bar { display:-webkit-flex; display:flex; gap:8px; }
-    .add-sel { -webkit-flex:1; flex:1; background:#132540; border:2px solid #2a4a70; border-radius:8px; padding:11px 10px; color:#e2e8f0; font-size:14px; font-weight:600; outline:none; -webkit-appearance:none; }
-    .btn-add { background:#00d4ff; color:#000; border:none; border-radius:8px; padding:11px 16px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; -webkit-appearance:none; }
-    .iss-entry { background:#0d1a2d; border:1.5px solid #1e3a5f; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:9px; margin-top:2px; }
+    .add-sel { -webkit-flex:1; flex:1; background:#0a1628; border:1px solid #1a3a5c; border-radius:10px; padding:12px 14px; color:#e2e8f0; font-size:13px; outline:none; -webkit-appearance:none; }
+    .btn-add { background:linear-gradient(135deg,#f59e0b,#d97706); color:#0a1628; border:none; border-radius:10px; padding:12px 18px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap; -webkit-appearance:none; flex-shrink:0; }
+    .iss-entry { background:#0d1a2d; border:1.5px solid #1e3a5f; border-radius:10px; padding:12px; display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; gap:9px; }
     .iss-head { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; }
     .itag { font-size:12px; font-weight:700; padding:4px 10px; border-radius:5px; }
     .itag.exp    { background:rgba(239,68,68,0.2);   color:#ef4444; border:1px solid rgba(239,68,68,0.4); }
@@ -254,15 +286,16 @@
     .field-qty { width:80px; flex-shrink:0; }
     .flbl { font-size:11px; font-weight:700; color:#7a93b8; margin-bottom:5px; letter-spacing:0.5px; text-transform:uppercase; }
     .bc-inp { width:100%; background:#0a1628; border:2px solid #2a4a70; border-radius:8px; padding:10px 12px; color:#ffffff; font-size:15px; font-family:monospace; letter-spacing:2px; outline:none; }
-    .bc-inp:focus { border-color:#00d4ff; background:#0d1e38; }
+    .bc-inp:focus { border-color:#f59e0b; background:#0d1e38; }
     .qty-inp { width:100%; background:#0a1628; border:2px solid #2a4a70; border-radius:8px; padding:10px 8px; color:#00d4ff; font-size:17px; font-weight:800; text-align:center; outline:none; }
-    .qty-inp:focus { border-color:#00d4ff; background:#0d1e38; }
-    .ni-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:10px; padding:8px 0; }
-    .ni-row input { width:18px; height:18px; accent-color:#10b981; cursor:pointer; }
-    .ni-row label { font-size:14px; color:#94a3b8; cursor:pointer; font-weight:600; }
-    .dc-memo { background:#0d1a2d; border:2px solid #2a4a70; border-radius:8px; padding:10px 12px; color:#e2e8f0; font-size:14px; resize:none; width:100%; outline:none; height:70px; }
-    .dc-memo:focus { border-color:#00d4ff; }
-    .btn-confirm { width:100%; padding:13px; border-radius:10px; border:none; cursor:pointer; background:linear-gradient(135deg,#059669,#047857); color:#fff; font-size:14px; font-weight:800; -webkit-appearance:none; }
+    .qty-inp:focus { border-color:#f59e0b; background:#0d1e38; }
+    .ni-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:10px; padding:10px 14px; background:#0a1628; border-radius:10px; border:1px solid #1a3a5c; cursor:pointer; }
+    .ni-row input { width:18px; height:18px; accent-color:#10b981; cursor:pointer; flex-shrink:0; }
+    .ni-row label { font-size:13px; color:#94a3b8; cursor:pointer; font-weight:600; }
+    .dc-memo { background:#0a1628; border:1px solid #1a3a5c; border-radius:10px; padding:12px 14px; color:#e2e8f0; font-size:13px; resize:none; width:100%; outline:none; height:70px; font-family:inherit; }
+    .dc-memo:focus { border-color:rgba(245,158,11,0.4); }
+    .btn-confirm { width:100%; padding:15px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(135deg,#059669,#047857); color:#fff; font-size:15px; font-weight:800; -webkit-appearance:none; box-shadow:0 4px 20px rgba(5,150,105,0.35); display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:8px; }
+    .btn-confirm:active { transform:scale(0.98); }
     .insp-result { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:11px; }
     .insp-result.has-iss { background:rgba(239,68,68,0.06); border-color:rgba(239,68,68,0.25); }
     .res-title { font-size:12px; font-weight:700; color:#10b981; margin-bottom:6px; }
@@ -598,6 +631,90 @@ function iToggleDC(inv){
   s.dc=!s.dc;
   App.list();
 }
+
+// ★ DC 모달 열기/닫기
+var _dcModalInv = null;
+function openDCModal(inv) {
+  _dcModalInv = inv;
+  var job = null;
+  for(var i=0;i<S.jobs.length;i++){ if(S.jobs[i].invoice===inv){ job=S.jobs[i]; break; } }
+  // 인보이스 정보 표시
+  document.getElementById('dcModalInv').textContent = inv;
+  document.getElementById('dcModalRem').textContent = (job ? (job.remarks||'') + '  ·  SKU '+(job.skuCount||0)+' / Qty '+(job.totalQty||0) : '');
+  // Inspector
+  var me = S.me || '';
+  var initls = me ? me.split(' ').map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase() : '?';
+  document.getElementById('dcInspAvatar').textContent = initls;
+  document.getElementById('dcInspName').textContent = me || '(Not signed in)';
+  // 기존 상태 복원
+  _renderDCModalEntries();
+  var s = getIS(inv);
+  document.getElementById('dcModalNI').checked = s.ni || false;
+  document.getElementById('dcModalMemo').value = s.memo || '';
+  // 열기
+  document.getElementById('dcModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDCModal() {
+  document.getElementById('dcModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  _dcModalInv = null;
+}
+function _renderDCModalEntries() {
+  var inv = _dcModalInv;
+  if(!inv) return;
+  var s = getIS(inv);
+  var html = s.issues.map(function(x,i){
+    return '<div class="iss-entry">'
+      +'<div class="iss-head"><span class="itag '+x.t+'">'+ILABELS[x.t]+' - '+INAMES[x.t]+'</span>'
+      +'<button class="rm-btn" onclick="dcModalRemove('+i+')">&#10005;</button></div>'
+      +'<div class="field-row">'
+      +'<div class="field-bc"><div class="flbl">Barcode (last 5+ digits)</div>'
+      +'<input class="bc-inp" maxlength="15" placeholder="e.g. 12345" value="'+x.bc+'" oninput="dcModalSetBC('+i+',this.value)"></div>'
+      +'<div class="field-qty"><div class="flbl">Qty</div>'
+      +'<input class="qty-inp" type="number" min="1" placeholder="0" value="'+x.q+'" oninput="dcModalSetQ('+i+',this.value)"></div>'
+      +'</div></div>';
+  }).join('');
+  document.getElementById('dcModalEntries').innerHTML = html;
+}
+function dcModalAddIssue() {
+  var inv = _dcModalInv; if(!inv) return;
+  var sel = document.getElementById('dcModalSel');
+  var t = sel.value; if(!t){ alert('Please select issue type'); return; }
+  var s = getIS(inv);
+  s.issues.push({t:t, bc:'', q:''});
+  _saveInspState();
+  sel.value = '';
+  _renderDCModalEntries();
+}
+function dcModalRemove(i) {
+  var inv = _dcModalInv; if(!inv) return;
+  var s = getIS(inv); s.issues.splice(i,1);
+  _saveInspState(); _renderDCModalEntries();
+}
+function dcModalSetBC(i,v) {
+  var s = getIS(_dcModalInv); if(s.issues[i]) s.issues[i].bc=v; _saveInspState();
+}
+function dcModalSetQ(i,v) {
+  var s = getIS(_dcModalInv); if(s.issues[i]) s.issues[i].q=v; _saveInspState();
+}
+function dcModalToggleNI() {
+  var inv = _dcModalInv; if(!inv) return;
+  var s = getIS(inv);
+  s.ni = !s.ni;
+  document.getElementById('dcModalNI').checked = s.ni;
+  _saveInspState();
+}
+function dcModalSetMemo(v) {
+  var s = getIS(_dcModalInv); s.memo=v; _saveInspState();
+}
+function dcModalConfirm() {
+  // iConfirm 재사용
+  iConfirm(_dcModalInv);
+  if(window.inspState && _dcModalInv && window.inspState[_dcModalInv] && window.inspState[_dcModalInv].done) {
+    closeDCModal();
+  }
+}
 function iConfirm(inv){
   // ★ 로그인 확인 - 이름 없으면 저장 불가
   if(!S.me || S.me.trim() === '') {
@@ -625,6 +742,7 @@ function iConfirm(inv){
     inspEndAt: inspEndAt
   };
   netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);});
+  closeDCModal();
   App.list(); App.kpis();
   setTimeout(function(){var e=document.getElementById('card-'+inv);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
 }
@@ -660,33 +778,10 @@ function buildInspHTML(job) {
     html += '<button class="btn-edit-insp" onclick="iEdit(\''+inv+'\')">&#9999;&#65039; Edit Inspection</button>';
     html += '<button class="btn-reset-insp" onclick="iResetInspection(\''+inv+'\')">&#128465;&#65039; Reset (Clear All)</button>';
   } else {
-    html += '<button class="btn-dblcheck" onclick="iToggleDC(\''+inv+'\')">&#128300; Double Checking '+(s.dc?'&#9650;':'&#9660;')+'</button>';
-    if(s.dc) {
-      var entries = s.issues.map(function(x,i){
-        return '<div class="iss-entry">'
-          +'<div class="iss-head"><span class="itag '+x.t+'">'+ILABELS[x.t]+' - '+INAMES[x.t]+'</span>'
-          +'<button class="rm-btn" onclick="iRemove(\''+inv+'\','+i+')">&#10005;</button></div>'
-          +'<div class="field-row">'
-          +'<div class="field-bc"><div class="flbl">Barcode (last 5 digits)</div>'
-          +'<input class="bc-inp" id="ibc-'+inv+'-'+i+'" maxlength="15" placeholder="e.g. 12345" value="'+x.bc+'" oninput="iSetBC(\''+inv+'\','+i+',this.value)"></div>'
-          +'<div class="field-qty"><div class="flbl">Qty</div>'
-          +'<input class="qty-inp" type="number" min="1" placeholder="0" value="'+x.q+'" oninput="iSetQ(\''+inv+'\','+i+',this.value)"></div>'
-          +'</div></div>';
-      }).join('');
-      html += '<div class="dc-panel"><div class="dc-title">&#128300; Double Checking Panel</div>'
-        +'<div class="add-bar"><select class="add-sel" id="isel-'+inv+'"><option value="">Select issue type...</option>'
-        +'<option value="exp">&#128308; EXP - Expiration Date</option>'
-        +'<option value="oos">&#128993; OOS - Out of Stock</option>'
-        +'<option value="nf">&#128995; NF - Not Found</option>'
-        +'<option value="cancel">&#10060; CANCEL - Order Cancelled</option>'
-        +'</select><button class="btn-add" onclick="iAddIssue(\''+inv+'\')">+ Add</button></div>'
-        +entries
-        +'<div class="ni-row"><input type="checkbox" id="ini-'+inv+'" '+(s.ni?'checked':'')+' onchange="iToggleNI(\''+inv+'\')">'
-        +'<label for="ini-'+inv+'">&#9989; No issues - All OK</label></div>'
-        +'<textarea class="dc-memo" placeholder="&#128221; Notes (optional)..." oninput="iSetMemo(\''+inv+'\',this.value)">'+s.memo+'</textarea>'
-        +'<button class="btn-confirm" onclick="iConfirm(\''+inv+'\')">&#10003; Double Checking DONE</button>'
-        +'</div>';
-    }
+    html += '<button class="btn-dblcheck" onclick="openDCModal(\''+inv+'\')">'
+      +'<span class="dc-check-bounce">&#10003;</span>'
+      +' &#128300; Double Checking &mdash; Tap to Inspect'
+      +'</button>';
   }
   html += '</div>';
   return html;
@@ -1665,5 +1760,53 @@ function mobConfirmComplete(inv){
   showMobModal('&#10003;','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(inv); });
 }
 </script>
+<!-- ★ DC 모달 오버레이 -->
+<div class="dc-overlay" id="dcModalOverlay">
+  <div class="dc-topbar">
+    <div>
+      <div class="dc-inv-num" id="dcModalInv">—</div>
+      <div class="dc-inv-rem" id="dcModalRem">—</div>
+    </div>
+    <button class="dc-close-btn" onclick="closeDCModal()">&#10005; Close</button>
+  </div>
+  <div class="dc-sheet" id="dcModalSheet">
+    <div class="dc-handle"><div class="dc-handle-bar"></div></div>
+    <div class="dc-header">
+      <div class="dc-header-badge">&#128300;</div>
+      <div>
+        <div class="dc-header-title">Inspection Panel</div>
+        <div class="dc-header-sub">Record inspection result for this order</div>
+      </div>
+    </div>
+    <div class="dc-body">
+      <div class="inspector-row">
+        <div class="inspector-avatar" id="dcInspAvatar">?</div>
+        <div>
+          <div class="inspector-label">Inspector (검수 작업자)</div>
+          <div class="inspector-name" id="dcInspName">—</div>
+        </div>
+      </div>
+      <div>
+        <div class="add-bar">
+          <select class="add-sel" id="dcModalSel">
+            <option value="">Select issue type...</option>
+            <option value="exp">&#128308; EXP - Expiration Date</option>
+            <option value="oos">&#128993; OOS - Out of Stock</option>
+            <option value="nf">&#128995; NF - Not Found</option>
+            <option value="cancel">&#10060; CANCEL - Order Cancelled</option>
+          </select>
+          <button class="btn-add" onclick="dcModalAddIssue()">+ Add</button>
+        </div>
+      </div>
+      <div id="dcModalEntries"></div>
+      <div class="ni-row" onclick="dcModalToggleNI()">
+        <input type="checkbox" id="dcModalNI" onclick="event.stopPropagation();dcModalToggleNI()">
+        <label for="dcModalNI">&#9989; No issues — All OK (PASS)</label>
+      </div>
+      <textarea class="dc-memo" id="dcModalMemo" placeholder="&#128221; Notes (optional)..." oninput="dcModalSetMemo(this.value)"></textarea>
+      <button class="btn-confirm" onclick="dcModalConfirm()">&#10003; Double Checking DONE</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
