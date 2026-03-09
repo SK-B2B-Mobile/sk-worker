@@ -746,7 +746,14 @@ function iConfirm(inv){
   App.list(); App.kpis();
   setTimeout(function(){var e=document.getElementById('card-'+inv);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
 }
-function iEdit(inv){ var s=getIS(inv); s.done=false; s.dc=true; _saveInspState(); App.list(); App.kpis(); }
+function iEdit(inv){
+  var s=getIS(inv);
+  s.done=false;
+  _saveInspState();
+  App.kpis();
+  // ★ 기존 내용이 채워진 상태로 모달 열기
+  openDCModal(inv);
+}
 
 function iResetInspection(inv){
   if(!confirm('Reset inspection for ' + inv + '?\nThis will clear the record from Google Sheet.')) return;
@@ -765,16 +772,57 @@ function iResetInspection(inv){
 function buildInspHTML(job) {
   var inv = job.invoice;
   var s = getIS(inv);
+  var serverVal = String(job.inspection || '').trim();
+  var serverNote = String(job.inspectionNote || '').trim();
   var html = '<div class="insp-wrap">';
 
-  if(s.done) {
-    var hasI = s.issues.length>0;
-    var items = s.issues.map(function(x){
-      return '<div class="res-item"><span class="itag '+x.t+'">'+ILABELS[x.t]+'</span>'
-        +' Barcode: <strong style="font-family:monospace;color:'+ICOLORS[x.t]+'">'+x.bc+'</strong>'
-        +' &middot; Qty: <strong style="color:'+ICOLORS[x.t]+'">'+x.q+'</strong></div>';
-    }).join('');
-    html += '<div class="insp-result'+(hasI?' has-iss':'')+'"><div class="res-title">'+(hasI?'&#9888; Issues Recorded':'&#10003; Inspection Passed')+'</div>'+items+(s.memo?'<div class="res-memo">&#128221; '+s.memo+'</div>':'')+'</div>';
+  // done 여부: 로컬 또는 서버값으로 판단
+  var isDone = s.done || serverVal !== '';
+
+  if(isDone) {
+    var hasI = (s.issues && s.issues.length > 0) || serverVal.indexOf('ISSUES') >= 0;
+
+    // ── 이슈 목록: 로컬 우선, 없으면 서버 Note 파싱 ──
+    var items = '';
+    if (s.issues && s.issues.length > 0) {
+      items = s.issues.map(function(x){
+        return '<div class="res-item"><span class="itag '+x.t+'">'+ILABELS[x.t]+'</span>'
+          +' Barcode: <strong style="font-family:monospace;color:'+ICOLORS[x.t]+'">'+x.bc+'</strong>'
+          +' &middot; Qty: <strong style="color:'+ICOLORS[x.t]+'">'+x.q+'</strong></div>';
+      }).join('');
+    } else if (hasI && serverNote) {
+      // 서버 Note에서 이슈 내용 파싱
+      serverNote.split('\n').forEach(function(line) {
+        line = line.trim();
+        if (!line || line.indexOf('===') >= 0 || line.indexOf('Completed:') >= 0 || line.indexOf('Inspector:') >= 0 || line.indexOf('Note:') >= 0) return;
+        var typeMatch = line.match(/^(EXP|OOS|NF|CANCEL)/i);
+        var t = typeMatch ? typeMatch[1].toLowerCase() : 'exp';
+        var color = ICOLORS[t] || '#94a3b8';
+        var label = ILABELS[t] || t.toUpperCase();
+        items += '<div class="res-item"><span class="itag '+t+'">'+label+'</span>'
+          +' <span style="color:'+color+';font-size:12px;">'+line.replace(/^(EXP|OOS|NF|CANCEL):\s*/i,'')+'</span></div>';
+      });
+    }
+
+    // ── 메모 ──
+    var memo = s.memo || '';
+    if (!memo && serverNote) {
+      var noteMatch = serverNote.match(/Note:\s*(.+)/);
+      if (noteMatch) memo = noteMatch[1];
+    }
+
+    // ── Inspector & 완료시간 ──
+    var inspector = s.inspector || String(job.inspector || '').trim();
+    var inspEnd = String(job.inspEnd || job['Insp. End'] || '').trim();
+    var metaHtml = '';
+    if (inspector || inspEnd) {
+      metaHtml = '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);display:flex;gap:12px;flex-wrap:wrap;">'
+        +(inspector ? '<span style="font-size:11px;color:#7a93b8;">&#128100; '+inspector+'</span>' : '')
+        +(inspEnd ? '<span style="font-size:11px;color:#7a93b8;">&#9201; '+inspEnd+'</span>' : '')
+        +'</div>';
+    }
+
+    html += '<div class="insp-result'+(hasI?' has-iss':'')+'"><div class="res-title">'+(hasI?'&#9888; Issues Recorded':'&#10003; Inspection Passed')+'</div>'+items+(memo?'<div class="res-memo">&#128221; '+memo+'</div>':'')+metaHtml+'</div>';
     html += '<button class="btn-edit-insp" onclick="iEdit(\''+inv+'\')">&#9999;&#65039; Edit Inspection</button>';
     html += '<button class="btn-reset-insp" onclick="iResetInspection(\''+inv+'\')">&#128465;&#65039; Reset (Clear All)</button>';
   } else {
