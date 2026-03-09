@@ -747,11 +747,47 @@ function iConfirm(inv){
   setTimeout(function(){var e=document.getElementById('card-'+inv);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
 }
 function iEdit(inv){
-  var s=getIS(inv);
-  s.done=false;
+  var s = getIS(inv);
+
+  // ★ 로컬에 이슈 데이터가 없으면 서버 Note에서 복원
+  if (!s.issues || s.issues.length === 0) {
+    var job = null;
+    for(var j=0; j<S.jobs.length; j++){ if(S.jobs[j].invoice===inv){ job=S.jobs[j]; break; } }
+
+    if (job) {
+      var serverNote = String(job.inspectionNote || '').trim();
+      var restoredIssues = [];
+      var restoredMemo   = '';
+
+      if (serverNote) {
+        serverNote.split('\n').forEach(function(line) {
+          line = line.trim();
+          if (!line || line.indexOf('===') >= 0 || line.indexOf('Completed:') >= 0 || line.indexOf('Inspector:') >= 0) return;
+          if (line.indexOf('Note:') === 0) {
+            restoredMemo = line.replace('Note:', '').trim();
+            return;
+          }
+          var typeMatch = line.match(/^(EXP|OOS|NF|CANCEL)/i);
+          if (typeMatch) {
+            var tKey = typeMatch[1].toLowerCase();
+            var bcMatch = line.match(/Barcode\s+([\w\d]+)/i);
+            var qMatch  = line.match(/[x×]\s*(\d+)/i);
+            restoredIssues.push({ t: tKey, bc: bcMatch ? bcMatch[1] : '', q: qMatch ? qMatch[1] : '' });
+          }
+        });
+      }
+
+      s.issues    = restoredIssues;
+      s.memo      = restoredMemo;
+      s.ni        = (restoredIssues.length === 0 && String(job.inspection||'').indexOf('PASS') >= 0);
+      s.inspector = String(job.inspector || '').trim();
+    }
+  }
+
+  s.done = false;
   _saveInspState();
   App.kpis();
-  // ★ 기존 내용이 채워진 상태로 모달 열기
+  // ★ 복원된 내용이 채워진 상태로 모달 열기
   openDCModal(inv);
 }
 
