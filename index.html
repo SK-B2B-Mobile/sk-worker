@@ -1301,13 +1301,21 @@ var App = {
 
     var cardCls = 'jcard st-' + st + (isMine && !isD ? ' mine' : '');
 
-    // ★ Inspection 배지 - DONE pill 옆에 표시
+    // ★ Inspection 배지 - 로컬 + 서버값 모두 체크
     var inspPillBadge = '';
-    if (isD && window.inspState && window.inspState[inv]) {
-      var _is = window.inspState[inv];
-      if (_is.done && _is.issues && _is.issues.length > 0) {
-        inspPillBadge = '<span style="font-size:10px;background:rgba(239,68,68,0.2);color:#ef4444;padding:3px 8px;border-radius:5px;font-weight:700;border:1px solid rgba(239,68,68,0.4);">&#9888; Issues</span>';
-      } else if (_is.done) {
+    if (isD) {
+      var _is = (window.inspState && window.inspState[inv]) ? window.inspState[inv] : null;
+      var _serverVal = String(job.inspection || '').trim();
+      var _hasLocalIssues = _is && _is.done && _is.issues && _is.issues.length > 0;
+      var _hasServerIssues = _serverVal.indexOf('ISSUES') >= 0;
+      var _isDone = (_is && _is.done) || _serverVal !== '';
+
+      if (_hasLocalIssues || _hasServerIssues) {
+        // ⚠ 이슈 있음 - 빨간 배지
+        var _issueNum = _hasLocalIssues ? _is.issues.length : (_serverVal.match(/\d+/) ? _serverVal.match(/\d+/)[0] : '');
+        inspPillBadge = '<span style="font-size:10px;background:rgba(239,68,68,0.2);color:#ef4444;padding:3px 8px;border-radius:5px;font-weight:700;border:1px solid rgba(239,68,68,0.4);">&#9888; Issues' + (_issueNum ? '('+_issueNum+')' : '') + '</span>';
+      } else if (_isDone) {
+        // ✓ PASS - 초록 배지
         inspPillBadge = '<span style="font-size:10px;background:rgba(16,185,129,0.2);color:#10b981;padding:3px 8px;border-radius:5px;font-weight:700;border:1px solid rgba(16,185,129,0.4);">&#10003; Inspected</span>';
       }
     }
