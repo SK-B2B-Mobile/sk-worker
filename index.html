@@ -270,9 +270,47 @@
     /* 패널 내부 공통 */
     .dc-panel { display:contents; }
     .dc-title { display:none; }
+    /* ★ Issue 선택 영역 - 명확한 구분 */
+    .dc-section-label { font-size:10px; font-weight:800; color:#f59e0b; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
     .add-bar { display:-webkit-flex; display:flex; gap:8px; }
-    .add-sel { -webkit-flex:1; flex:1; background:#0a1628; border:1px solid #1a3a5c; border-radius:10px; padding:12px 14px; color:#e2e8f0; font-size:13px; outline:none; -webkit-appearance:none; }
-    .btn-add { background:linear-gradient(135deg,#f59e0b,#d97706); color:#0a1628; border:none; border-radius:10px; padding:12px 18px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap; -webkit-appearance:none; flex-shrink:0; }
+    .add-sel-wrap {
+      -webkit-flex:1; flex:1; position:relative;
+    }
+    .add-sel-wrap::before {
+      content:'⚠ Issue Type';
+      position:absolute; top:-10px; left:10px;
+      font-size:9px; font-weight:800; color:#f59e0b;
+      background:#0b1a2e; padding:0 6px;
+      letter-spacing:0.8px; text-transform:uppercase;
+      z-index:1;
+    }
+    .add-sel {
+      width:100%;
+      background:linear-gradient(135deg,#0d1e38,#0a1628);
+      border:2px solid #f59e0b;
+      border-radius:10px;
+      padding:13px 14px 12px;
+      color:#fbbf24;
+      font-size:13px;
+      font-weight:700;
+      outline:none;
+      -webkit-appearance:none;
+      box-shadow:0 0 0 0 rgba(245,158,11,0);
+      transition:box-shadow 0.2s, border-color 0.2s;
+    }
+    .add-sel:focus {
+      border-color:#fbbf24;
+      box-shadow:0 0 0 3px rgba(245,158,11,0.2);
+    }
+    .btn-add {
+      background:linear-gradient(135deg,#f59e0b,#d97706);
+      color:#0a1628; border:none; border-radius:10px;
+      padding:12px 20px; font-size:14px; font-weight:900;
+      cursor:pointer; white-space:nowrap; -webkit-appearance:none;
+      flex-shrink:0; box-shadow:0 4px 14px rgba(245,158,11,0.4);
+      letter-spacing:0.3px;
+    }
+    .btn-add:active { transform:scale(0.96); }
     .iss-entry { background:#0d1a2d; border:1.5px solid #1e3a5f; border-radius:10px; padding:12px; display:-webkit-flex; display:flex; -webkit-flex-direction:column; flex-direction:column; gap:9px; }
     .iss-head { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:space-between; justify-content:space-between; }
     .itag { font-size:12px; font-weight:700; padding:4px 10px; border-radius:5px; }
@@ -289,11 +327,39 @@
     .bc-inp:focus { border-color:#f59e0b; background:#0d1e38; }
     .qty-inp { width:100%; background:#0a1628; border:2px solid #2a4a70; border-radius:8px; padding:10px 8px; color:#00d4ff; font-size:17px; font-weight:800; text-align:center; outline:none; }
     .qty-inp:focus { border-color:#f59e0b; background:#0d1e38; }
-    .ni-row { display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; gap:10px; padding:10px 14px; background:#0a1628; border-radius:10px; border:1px solid #1a3a5c; cursor:pointer; }
-    .ni-row input { width:18px; height:18px; accent-color:#10b981; cursor:pointer; flex-shrink:0; }
-    .ni-row label { font-size:13px; color:#94a3b8; cursor:pointer; font-weight:600; }
-    .dc-memo { background:#0a1628; border:1px solid #1a3a5c; border-radius:10px; padding:12px 14px; color:#e2e8f0; font-size:13px; resize:none; width:100%; outline:none; height:70px; font-family:inherit; }
-    .dc-memo:focus { border-color:rgba(245,158,11,0.4); }
+    .ni-row {
+      display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center;
+      gap:12px; padding:13px 16px;
+      background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.04));
+      border-radius:10px;
+      border:2px solid rgba(16,185,129,0.35);
+      cursor:pointer;
+    }
+    .ni-row:active { background:rgba(16,185,129,0.15); }
+    .ni-row input { width:20px; height:20px; accent-color:#10b981; cursor:pointer; flex-shrink:0; }
+    .ni-row label { font-size:13px; color:#34d399; cursor:pointer; font-weight:700; }
+    .dc-memo-wrap { position:relative; }
+    .dc-memo-wrap::before {
+      content:'📝 Notes';
+      position:absolute; top:-10px; left:10px;
+      font-size:9px; font-weight:800; color:#7a93b8;
+      background:#0b1a2e; padding:0 6px;
+      letter-spacing:0.8px; text-transform:uppercase;
+      z-index:1;
+    }
+    .dc-memo {
+      background:linear-gradient(135deg,#0d1e38,#0a1628);
+      border:2px solid #1a3a5c;
+      border-radius:10px; padding:14px 14px 12px;
+      color:#e2e8f0; font-size:13px; resize:none;
+      width:100%; outline:none; height:75px;
+      font-family:inherit;
+      transition:border-color 0.2s, box-shadow 0.2s;
+    }
+    .dc-memo:focus {
+      border-color:rgba(245,158,11,0.5);
+      box-shadow:0 0 0 3px rgba(245,158,11,0.12);
+    }
     .btn-confirm { width:100%; padding:15px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(135deg,#059669,#047857); color:#fff; font-size:15px; font-weight:800; -webkit-appearance:none; box-shadow:0 4px 20px rgba(5,150,105,0.35); display:-webkit-flex; display:flex; -webkit-align-items:center; align-items:center; -webkit-justify-content:center; justify-content:center; gap:8px; }
     .btn-confirm:active { transform:scale(0.98); }
     .insp-result { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:11px; }
@@ -1878,8 +1944,9 @@ function mobConfirmComplete(inv){
           <div class="inspector-name" id="dcInspName">—</div>
         </div>
       </div>
-      <div>
-        <div class="add-bar">
+      <!-- ① Issue 선택 영역 -->
+      <div class="add-bar">
+        <div class="add-sel-wrap">
           <select class="add-sel" id="dcModalSel">
             <option value="">Select issue type...</option>
             <option value="exp">&#128308; EXP - Expiration Date</option>
@@ -1887,15 +1954,23 @@ function mobConfirmComplete(inv){
             <option value="nf">&#128995; NF - Not Found</option>
             <option value="cancel">&#10060; CANCEL - Order Cancelled</option>
           </select>
-          <button class="btn-add" onclick="dcModalAddIssue()">+ Add</button>
         </div>
+        <button class="btn-add" onclick="dcModalAddIssue()">+ Add</button>
       </div>
+
+      <!-- ② 추가된 이슈 목록 -->
       <div id="dcModalEntries"></div>
+
+      <!-- ③ No issues 체크 -->
       <div class="ni-row" onclick="dcModalToggleNI()">
         <input type="checkbox" id="dcModalNI" onclick="event.stopPropagation();dcModalToggleNI()">
         <label for="dcModalNI">&#9989; No issues — All OK (PASS)</label>
       </div>
-      <textarea class="dc-memo" id="dcModalMemo" placeholder="&#128221; Notes (optional)..." oninput="dcModalSetMemo(this.value)"></textarea>
+
+      <!-- ④ Notes 입력 -->
+      <div class="dc-memo-wrap">
+        <textarea class="dc-memo" id="dcModalMemo" placeholder="Notes here..." oninput="dcModalSetMemo(this.value)"></textarea>
+      </div>
       <button class="btn-confirm" onclick="dcModalConfirm()">&#10003; Double Checking DONE</button>
     </div>
   </div>
