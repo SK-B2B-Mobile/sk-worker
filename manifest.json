@@ -1,13 +1,13 @@
 {
   "name": "SK B2B Fulfillment",
-  "short_name": "SK Worker",
+  "short_name": "SK Fulfillment",
   "description": "StyleKorean B2B Fulfillment Worker Portal",
   "start_url": "/sk-worker/",
   "scope": "/sk-worker/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0e1a",
-  "theme_color": "#6366f1",
+  "background_color": "#1B4332",
+  "theme_color": "#2D6A4F",
   "icons": [
     {
       "src": "icon-192.png",
