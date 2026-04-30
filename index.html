@@ -1521,10 +1521,10 @@ var App = {
     var timeHtml = '';
     if (isD) {
       // ★ Work Duration 중복 제거 - durBar 없앰 (Picker 오른쪽에만 표시)
-      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
-        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + '</div></div></div>';
+      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start</div><div class="tdis">' + fmt12(job.startTime) + (job.startAtISO ? '<div style="font-size:10px;color:#4a9eca;margin-top:2px;">' + fmtD(job.startAtISO) + '</div>' : '') + '</div></div>'
+        + '<div class="tbl"><div class="tlbl">End</div><div class="tdis">' + fmt12(job.endTime) + (job.endAtISO ? '<div style="font-size:10px;color:#4a9eca;margin-top:2px;">' + fmtD(job.endAtISO) + '</div>' : '') + '</div></div></div>';
     } else if (isS) {
-      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + '</div></div>'
+      timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Started At</div><div class="tdis">' + fmt12(job.startTime) + (job.startAtISO ? '<div style="font-size:10px;color:#4a9eca;margin-top:2px;">' + fmtD(job.startAtISO) + '</div>' : '') + '</div></div>'
         + '<div class="tbl"><div class="tlbl">End Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">Auto-fill on Complete</div></div></div>';
     } else {
       timeHtml = '<div class="trow"><div class="tbl"><div class="tlbl">Start Time</div><div class="tdis" style="color:#2d4a6a;font-style:italic;font-size:13px;">' + (job.picker ? '-- auto on Start --' : 'Select picker first') + '</div></div>'
