@@ -624,6 +624,28 @@ function netPost(data) {
   });
 }
 
+// ══════════════ INSPECTION SAVE (BULK — ★ 2026-07-14 신규) ══════════════
+// 여러 건을 배열로 한번에 서버에 보냄 — 건별로 따로 부르는 것보다 훨씬 빠름
+function netPostInspectionBulk(dataList) {
+  var body = 'op=saveInspectionBulk&data=' + encodeURIComponent(JSON.stringify(dataList));
+  var doFetch = typeof fetch !== 'undefined'
+    ? fetch(GAS, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })
+        .then(function(r) { return r.json(); })
+    : Promise.reject(new Error('no fetch'));
+  return doFetch['catch'](function() {
+    return new Promise(function(res, rej) {
+      var x = new XMLHttpRequest();
+      var t = setTimeout(function() { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
+      x.open('POST', GAS, true);
+      x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:true}); } };
+      x.onerror = function() { clearTimeout(t); rej(new Error('network')); };
+      x.onabort = function() { clearTimeout(t); rej(new Error('aborted')); };
+      x.send(body);
+    });
+  });
+}
+
 // ══════════════ INSPECTION SAVE ══════════════
 function netPostInspection(data) {
   var body = 'op=saveInspection&data=' + encodeURIComponent(JSON.stringify(data));
@@ -1709,35 +1731,34 @@ var App = {
     if (!confirm('선택한 ' + list.length + '건을 "이상없음(PASS)"으로 처리할까요?')) return;
 
     var btn = $$('bulkPassBtn');
-    var total = list.length, done = 0;
     btn.disabled = true;
+    btn.textContent = '처리 중... (' + list.length + '건 한번에 전송)';
 
-    function processNext() {
-      if (done >= total) {
-        btn.disabled = false;
-        toast('✅ ' + total + '건 선택 PASS 처리 완료', 'ok');
-        S.bulkSelected = {};
-        App.load();
-        return;
-      }
-      var inv = list[done];
-      btn.textContent = '처리 중... (' + (done + 1) + '/' + total + ')';
-      var nowIso = new Date().toISOString();
+    // ★ 2026-07-14 변경: 건별로 순차 호출(느림, 19건에 30초 이상) 대신
+    //   전체를 배열 하나로 묶어서 서버에 한번에 전송 → 왕복 1번으로 끝남
+    var nowIso = new Date().toISOString();
+    var payloadList = list.map(function(inv) {
       if (!window.inspState) window.inspState = {};
       window.inspState[inv] = {dc:false, issues:[], memo:'', done:true, ni:true, inspector:S.me, inspEndAt:nowIso};
-      _saveInspState();
-      var payload = {
-        invoice: inv, pass: true, issues: [], memo: '',
-        inspectedAt: nowIso, inspector: S.me, inspEndAt: nowIso
-      };
-      netPostInspection(payload)
-        ['catch'](function(e) { console.warn('Bulk inspection save error for ' + inv + ':', e); })
-        ['then'](function() {
-          done++;
-          setTimeout(processNext, 350); // GAS 락 경합 방지용 간격
-        });
-    }
-    processNext();
+      return { invoice: inv, pass: true, issues: [], memo: '', inspectedAt: nowIso, inspector: S.me, inspEndAt: nowIso };
+    });
+    _saveInspState();
+
+    netPostInspectionBulk(payloadList).then(function(res) {
+      btn.disabled = false;
+      if (res && res.ok) {
+        toast('✅ ' + list.length + '건 선택 PASS 처리 완료', 'ok');
+      } else {
+        toast('⚠ 일부 저장 실패 — 새로고침 후 다시 확인해주세요', 'err');
+        console.warn('Bulk inspection save error:', res && res.error);
+      }
+      S.bulkSelected = {};
+      App.load();
+    })['catch'](function(e) {
+      btn.disabled = false;
+      toast('⚠ 저장 실패 — 다시 시도해주세요', 'err');
+      console.warn('Bulk inspection save error:', e);
+    });
   },
 
   onSearch: function(val) {
