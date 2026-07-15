@@ -1,5 +1,5 @@
 // SK B2B Fulfillment — Service Worker
-const CACHE_NAME = 'sk-worker-v1';
+const CACHE_NAME = 'sk-worker-v2'; // ★ 2026-07-14: v1→v2로 올림. 앞으로 코드 업데이트할 때마다 이 숫자를 올려야 폰에 설치된 앱이 캐시를 갈아치우고 새 버전을 받음
 
 // 설치 시 기본 파일 캐시
 self.addEventListener('install', function(event) {
