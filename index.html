@@ -841,7 +841,7 @@ function _renderDCModalEntries() {
 function dcModalAddIssue() {
   var inv = _dcModalInv; if(!inv) return;
   var sel = document.getElementById('dcModalSel');
-  var t = sel.value; if(!t){ alert('Please select issue type'); return; }
+  var t = sel.value; if(!t){ toast('⚠️ Please select an issue type', 'err'); return; }
   var s = getIS(inv);
   s.issues.push({t:t, bc:'', q:''});
   _saveInspState();
@@ -879,15 +879,24 @@ function dcModalConfirm() {
 function iConfirm(inv){
   // ★ 로그인 확인 - 이름 없으면 저장 불가
   if(!S.me || S.me.trim() === '') {
-    alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.');
+    toast('⚠️ Please sign in first — select your name', 'err');
     return;
   }
   var s=getIS(inv);
-  if(!s.ni&&s.issues.length===0){ if(!confirm('No issues recorded. Confirm as PASS?'))return; s.ni=true; }
+  if(!s.ni&&s.issues.length===0){
+    var _selEl = document.getElementById('dcModalSel');
+    var _selVal = _selEl ? _selEl.value : '';
+    if(_selVal){
+      toast('⚠️ You selected "' + _selVal.toUpperCase() + '" but didn\'t tap +Add. Add it, or clear it and check "No issues".', 'err');
+    } else {
+      toast('⚠️ Please check "No issues — All OK" before completing', 'err');
+    }
+    return;
+  }
   var nb=s.issues.filter(function(x){return x.bc.length<5;});
-  if(nb.length){alert('Please enter at least 5 barcode digits for all issues.');return;}
+  if(nb.length){toast('⚠️ Enter at least 5 barcode digits for all issues', 'err');return;}
   var nq=s.issues.filter(function(x){return !x.q||x.q==='0';});
-  if(nq.length){alert('Please enter quantity for all issues.');return;}
+  if(nq.length){toast('⚠️ Enter quantity for all issues', 'err');return;}
 
   s.done=true; s.dc=false;
   var inspEndAt = new Date().toISOString();
@@ -914,7 +923,10 @@ function iConfirm(inv){
   //   최신 목록에 "검수완료"로 반영되어 있어서 자동으로 건너뛰어짐.
   netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);})['then'](function(){
     App.load()['then'](function(){
-      _autoAdvanceInspection([inv]); // ★ 2026-07-14: 선점 체인으로 다음 대상을 찾고 시도
+      // ★ 2026-07-15: 완료 후 자동으로 다음 오더 모달을 여는 대신, 목록으로
+      //   돌아가서 작업자가 실제 손에 든 물건에 맞는 오더를 직접 선택하도록 변경.
+      //   동시성 보호(선점)는 카드를 직접 눌러 열 때 openDCModal()에서 그대로 적용됨.
+      toast('✅ Inspection completed', 'ok');
     });
   });
 }
