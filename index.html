@@ -479,13 +479,13 @@
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
       <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#e2e8f0; cursor:pointer;">
         <input type="checkbox" id="bulkSelectAllCheck" onchange="App.toggleBulkSelectAll(this.checked)" style="width:18px;height:18px;cursor:pointer;">
-        전체선택 (미검수 <span id="bulkTotalCount">0</span>건)
+        Select All (<span id="bulkTotalCount">0</span> pending)
       </label>
-      <span style="font-size:12px; color:#94a3b8;"><span id="bulkSelectedCount">0</span>건 선택됨</span>
+      <span style="font-size:12px; color:#94a3b8;"><span id="bulkSelectedCount">0</span> selected</span>
     </div>
     <button id="bulkPassBtn" onclick="App.bulkPassSelected()" disabled
       style="width:100%; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:800; font-size:14px; cursor:pointer; opacity:0.5;">
-      ✅ 선택한 <span id="bulkPassCount">0</span>건 PASS 처리
+      ✅ Mark <span id="bulkPassCount">0</span> Selected as PASS
     </button>
   </div>
   <div class="search-bar" id="searchBar" style="display:none">
@@ -646,6 +646,23 @@ function netPostInspectionBulk(dataList) {
   });
 }
 
+// ══════════════ INSPECTION CLAIM (★ 2026-07-14 신규) ══════════════
+// 여러 작업자가 동시에 같은 오더를 열지 못하게 서버에 "선점" 요청
+function netClaimInspection(invoice) {
+  var body = 'op=claimInspection&data=' + encodeURIComponent(JSON.stringify({ invoice: invoice, worker: S.me || '' }));
+  var doFetch = typeof fetch !== 'undefined'
+    ? fetch(GAS, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })
+        .then(function(r) { return r.json(); })
+    : Promise.reject(new Error('no fetch'));
+  return doFetch['catch'](function() { return { ok: true }; }); // 네트워크 실패시엔 막지 말고 진행(가용성 우선)
+}
+function netReleaseInspectionClaim(invoice) {
+  var body = 'op=releaseInspectionClaim&data=' + encodeURIComponent(JSON.stringify({ invoice: invoice }));
+  if (typeof fetch !== 'undefined') {
+    fetch(GAS, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body })['catch'](function(){});
+  }
+}
+
 // ══════════════ INSPECTION SAVE ══════════════
 function netPostInspection(data) {
   var body = 'op=saveInspection&data=' + encodeURIComponent(JSON.stringify(data));
@@ -736,7 +753,47 @@ function iToggleDC(inv){
 
 // ★ DC 모달 열기/닫기
 var _dcModalInv = null;
+// ★ 2026-07-14 변경: 모달을 열기 전에 서버에 먼저 "선점" 요청을 보내서, 다른
+//   작업자가 지금 이 오더를 보고 있으면 안 열리고 안내만 뜨도록 함(작업자가
+//   직접 카드를 눌러서 여는 경우 — 실패시 "OOO님이 검수 중입니다" 안내만 뜸).
 function openDCModal(inv) {
+  netClaimInspection(inv).then(function(res) {
+    if (res && res.ok) {
+      _actuallyOpenDCModal(inv);
+    } else {
+      var who = (res && res.claimedBy) ? res.claimedBy : 'Another worker';
+      toast('⚠ ' + who + ' is currently inspecting this order', 'err');
+    }
+  });
+}
+// ★ 2026-07-14 신규 — 완료 버튼을 누른 뒤 "다음 오더"로 자동 이동할 때 쓰는 체인.
+//   후보를 찾아 선점 시도 → 실패하면(다른 작업자가 방금 선점) 그 후보를 제외 목록에
+//   추가하고 조용히 다음 후보를 또 찾음. 여러 명이 동시에 완료해서 같은 다음
+//   오더로 몰려도, 딱 한 명만 성공하고 나머지는 자동으로 그 다음으로 넘어감.
+function _autoAdvanceInspection(excludeList) {
+  var nextInv = null;
+  var cardEls = document.querySelectorAll('#jlist .jcard');
+  for (var ci = 0; ci < cardEls.length; ci++) {
+    var cid = cardEls[ci].id.replace('card-', '');
+    if (excludeList.indexOf(cid) >= 0) continue;
+    var lst = window.inspState && window.inspState[cid];
+    if (lst && lst.done) continue;
+    var job2 = null;
+    for (var ji = 0; ji < S.jobs.length; ji++) { if (S.jobs[ji].invoice === cid) { job2 = S.jobs[ji]; break; } }
+    if (job2 && String(job2.inspection || '').trim() !== '') continue;
+    nextInv = cid; break;
+  }
+  if (!nextInv) { toast('✅ All inspections complete', 'ok'); return; }
+  netClaimInspection(nextInv).then(function(res) {
+    if (res && res.ok) {
+      _actuallyOpenDCModal(nextInv);
+    } else {
+      // 다른 작업자가 방금 선점함 — 조용히 그 다음 후보로
+      _autoAdvanceInspection(excludeList.concat([nextInv]));
+    }
+  });
+}
+function _actuallyOpenDCModal(inv) {
   _dcModalInv = inv;
   var job = null;
   for(var i=0;i<S.jobs.length;i++){ if(S.jobs[i].invoice===inv){ job=S.jobs[i]; break; } }
@@ -760,6 +817,8 @@ function openDCModal(inv) {
 function closeDCModal() {
   document.getElementById('dcModalOverlay').classList.remove('open');
   document.body.style.overflow = '';
+  // ★ 2026-07-14 신규: 닫을 때(취소든 완료든) 선점 해제 — 다른 작업자가 바로 이어서 열 수 있게
+  if (_dcModalInv) netReleaseInspectionClaim(_dcModalInv);
   _dcModalInv = null;
 }
 function _renderDCModalEntries() {
@@ -820,7 +879,7 @@ function dcModalConfirm() {
 function iConfirm(inv){
   // ★ 로그인 확인 - 이름 없으면 저장 불가
   if(!S.me || S.me.trim() === '') {
-    alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.\n\n검수 완료 전에 반드시 이름을 선택해주세요.');
+    alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.');
     return;
   }
   var s=getIS(inv);
@@ -829,20 +888,6 @@ function iConfirm(inv){
   if(nb.length){alert('Please enter at least 5 barcode digits for all issues.');return;}
   var nq=s.issues.filter(function(x){return !x.q||x.q==='0';});
   if(nq.length){alert('Please enter quantity for all issues.');return;}
-
-  // ★ 2026-07-14 신규: 이 카드가 검수완료 처리되면 정렬 규칙상(미검수 위/완료 아래)
-  //   리스트 맨 밑으로 내려가는데, 예전엔 "방금 완료한 카드"로 스크롤을 강제해서
-  //   화면이 맨 밑까지 확 튀는 어지러운 현상이 있었음. 완료 처리 "전" 순서를
-  //   기준으로 바로 다음에 있던(=다음 검수 대상) 카드를 미리 찾아두고, 완료 후엔
-  //   그 카드로 부드럽게 이동해서 작업자가 스크롤 안 하고 바로 이어서 검수 가능.
-  var nextInv = null;
-  var cardEls = document.querySelectorAll('#jlist .jcard');
-  var foundCurrent = false;
-  for (var ci = 0; ci < cardEls.length; ci++) {
-    var cid = cardEls[ci].id.replace('card-', '');
-    if (foundCurrent) { nextInv = cid; break; }
-    if (cid === inv) foundCurrent = true;
-  }
 
   s.done=true; s.dc=false;
   var inspEndAt = new Date().toISOString();
@@ -858,17 +903,20 @@ function iConfirm(inv){
     inspector: S.me,
     inspEndAt: inspEndAt
   };
-  netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);});
   closeDCModal();
-  App.list(); App.kpis();
-  // ★ 2026-07-14 변경: 완료된 카드(맨 아래로 이동함)가 아니라, 다음 검수 대상
-  //   카드로 부드럽게 스크롤. 다음 대상이 없으면(마지막 건이었으면) 스크롤 안 함.
-  setTimeout(function(){
-    if (nextInv) {
-      var ne = document.getElementById('card-' + nextInv);
-      if (ne) ne.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-  }, 80);
+
+  // ★ 2026-07-14 재수정 — 작업자가 여러 명이라, "다음 검수 대상"을 내 폰에
+  //   저장된(최대 15~20초 지연될 수 있는) 로컬 목록으로 정하면, 다른 작업자가
+  //   방금 처리한 오더를 모르고 똑같이 그 오더로 자동으로 넘어가는 사고가 날 수
+  //   있었음(두 명이 같은 오더를 동시에 검수하게 됨). 그래서 내 검수 결과를
+  //   서버에 저장한 "직후" 서버에서 최신 목록을 다시 받아온 뒤, 그 최신 데이터
+  //   기준으로 다음 대상을 정함 — 다른 작업자가 그 사이 이미 처리한 오더는
+  //   최신 목록에 "검수완료"로 반영되어 있어서 자동으로 건너뛰어짐.
+  netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);})['then'](function(){
+    App.load()['then'](function(){
+      _autoAdvanceInspection([inv]); // ★ 2026-07-14: 선점 체인으로 다음 대상을 찾고 시도
+    });
+  });
 }
 function iEdit(inv){
   var s = getIS(inv);
@@ -1272,7 +1320,7 @@ var App = {
   load: function() {
     setSyn('busy');
     var self = this;
-    netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
+    return netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
       if (d && d.ok) {
         var pendingPickers = {};
         for (var pi = 0; pi < S.jobs.length; pi++) {
@@ -1745,16 +1793,16 @@ var App = {
 
   bulkPassSelected: function() {
     if (!S.me || S.me.trim() === '') {
-      alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.\n\n검수 완료 전에 반드시 이름을 선택해주세요.');
+      alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.');
       return;
     }
     var list = Object.keys(S.bulkSelected || {}).filter(function(k) { return S.bulkSelected[k]; });
-    if (!list.length) { toast('선택된 건이 없습니다', 'ok'); return; }
-    if (!confirm('선택한 ' + list.length + '건을 "이상없음(PASS)"으로 처리할까요?')) return;
+    if (!list.length) { toast('No items selected', 'ok'); return; }
+    if (!confirm('Mark ' + list.length + ' selected item(s) as "No Issues (PASS)"?')) return;
 
     var btn = $$('bulkPassBtn');
     btn.disabled = true;
-    btn.textContent = '처리 중... (' + list.length + '건 한번에 전송)';
+    btn.textContent = 'Processing... (sending ' + list.length + ' items)';
 
     // ★ 2026-07-14 변경: 건별로 순차 호출(느림, 19건에 30초 이상) 대신
     //   전체를 배열 하나로 묶어서 서버에 한번에 전송 → 왕복 1번으로 끝남
@@ -1769,16 +1817,16 @@ var App = {
     netPostInspectionBulk(payloadList).then(function(res) {
       btn.disabled = false;
       if (res && res.ok) {
-        toast('✅ ' + list.length + '건 선택 PASS 처리 완료', 'ok');
+        toast('✅ ' + list.length + ' item(s) marked PASS', 'ok');
       } else {
-        toast('⚠ 일부 저장 실패 — 새로고침 후 다시 확인해주세요', 'err');
+        toast('⚠ Some saves failed — please refresh and check', 'err');
         console.warn('Bulk inspection save error:', res && res.error);
       }
       S.bulkSelected = {};
       App.load();
     })['catch'](function(e) {
       btn.disabled = false;
-      toast('⚠ 저장 실패 — 다시 시도해주세요', 'err');
+      toast('⚠ Save failed — please try again', 'err');
       console.warn('Bulk inspection save error:', e);
     });
   },
