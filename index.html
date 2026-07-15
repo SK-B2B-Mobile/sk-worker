@@ -474,11 +474,18 @@
       </div>
     </div>
   </div>
-  <!-- ★ 2026-07-14 신규: COMPLETED 탭에서 미검수 건이 있을 때만 노출되는 일괄 PASS 처리 버튼 -->
-  <div id="bulkPassBar" style="display:none; padding:10px 14px; background:rgba(245,158,11,0.08); border-bottom:1px solid rgba(245,158,11,0.25);">
-    <button id="bulkPassBtn" onclick="App.bulkPassNotInspected()"
-      style="width:100%; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:800; font-size:14px; cursor:pointer;">
-      ✅ 미검수 <span id="bulkPassCount">0</span>건 한번에 PASS 처리
+  <!-- ★ 2026-07-14 변경: 전체 자동 처리 대신, 작업자가 직접 체크한 것만 선택 처리하도록 변경 -->
+  <div id="bulkPassBar" style="display:none; padding:10px 14px; background:rgba(16,185,129,0.08); border-bottom:1px solid rgba(16,185,129,0.25);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#e2e8f0; cursor:pointer;">
+        <input type="checkbox" id="bulkSelectAllCheck" onchange="App.toggleBulkSelectAll(this.checked)" style="width:18px;height:18px;cursor:pointer;">
+        전체선택 (미검수 <span id="bulkTotalCount">0</span>건)
+      </label>
+      <span style="font-size:12px; color:#94a3b8;"><span id="bulkSelectedCount">0</span>건 선택됨</span>
+    </div>
+    <button id="bulkPassBtn" onclick="App.bulkPassSelected()" disabled
+      style="width:100%; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:800; font-size:14px; cursor:pointer; opacity:0.5;">
+      ✅ 선택한 <span id="bulkPassCount">0</span>건 PASS 처리
     </button>
   </div>
   <div class="search-bar" id="searchBar" style="display:none">
@@ -981,7 +988,7 @@ var LS = {
 var S = {
   me:null, tab:'mine', jobs:[], pickers:FB_PICK.slice(), colors:{},
   timer:null, elTimer:null, loginTimer:null,
-  searchQuery:'', openCards:{}, workerStatus:{}
+  searchQuery:'', openCards:{}, workerStatus:{}, bulkSelected:{}, notInspectedInvoices:[]
 };
 
 function $$(id) { return document.getElementById(id); }
@@ -1346,7 +1353,8 @@ var App = {
 
     var notInspCount = Math.max(0, done - checkedCount);
     // ★ 2026-07-14 신규: 완료됐지만 아직 검수 안 된 인보이스 목록을 모아서
-    //   일괄 PASS 버튼에서 쓸 수 있게 저장
+    //   체크박스 선택 처리에서 쓸 수 있게 저장. 이미 선택돼있던 것 중 더는
+    //   미검수가 아닌 건(다른 기기에서 이미 처리됨 등)은 선택에서 자동 제거.
     var notInspList = [];
     for (var ni in completedInvoices) {
       var lst = window.inspState && window.inspState[ni];
@@ -1355,11 +1363,14 @@ var App = {
       if (!done2) notInspList.push(ni);
     }
     S.notInspectedInvoices = notInspList;
+    var stillValid = {};
+    notInspList.forEach(function(inv2) { if (S.bulkSelected[inv2]) stillValid[inv2] = true; });
+    S.bulkSelected = stillValid;
     var bulkBar = $$('bulkPassBar');
     if (bulkBar) {
       if (S.tab === 'done' && notInspList.length > 0) {
         bulkBar.style.display = 'block';
-        $$('bulkPassCount').textContent = notInspList.length;
+        App.updateBulkBar();
       } else {
         bulkBar.style.display = 'none';
       }
@@ -1479,12 +1490,14 @@ var App = {
 
     // ★ Inspection 배지 - 로컬 + 서버값 모두 체크
     var inspPillBadge = '';
+    var _notInspectedForBulk = false;
     if (isD) {
       var _is = (window.inspState && window.inspState[inv]) ? window.inspState[inv] : null;
       var _serverVal = String(job.inspection || '').trim();
       var _hasLocalIssues = _is && _is.done && _is.issues && _is.issues.length > 0;
       var _hasServerIssues = _serverVal.indexOf('ISSUES') >= 0;
       var _isDone = (_is && _is.done) || _serverVal !== '';
+      _notInspectedForBulk = !_isDone; // ★ 2026-07-14 신규: 완료됐지만 아직 검수 안 된 카드만 일괄선택 체크박스 노출
 
       if (_hasLocalIssues || _hasServerIssues) {
         // ⚠ 이슈 있음 - 빨간 배지
@@ -1497,6 +1510,8 @@ var App = {
     }
 
     var headerHtml = '<div class="jch" onclick="App.toggleCard(\'' + inv + '\')">'
+      + (_notInspectedForBulk ? ('<div style="display:flex;align-items:center;padding-right:10px;flex-shrink:0;" onclick="event.stopPropagation()">'
+        + '<input type="checkbox" ' + (S.bulkSelected[inv] ? 'checked' : '') + ' onchange="App.toggleBulkSelect(\'' + inv + '\',this.checked)" style="width:22px;height:22px;cursor:pointer;accent-color:#10b981;"></div>') : '')
       + '<div style="flex:1;min-width:0;overflow:hidden;">'
       + '<div class="jinv">' + inv + '</div>'
       + '<div class="jrem" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (job.remarks || 'No remarks') + '</div>'
@@ -1654,17 +1669,43 @@ var App = {
     setTimeout(function() { self.load(); }, 9000);
   },
 
-  // ★ 2026-07-14 신규 — COMPLETED 탭에서 작업자가 놓친 미검수 건을 한번에
-  //   "이상없음(PASS)"으로 처리. 개별 iConfirm()과 동일한 저장 형태를 쓰되,
-  //   여러 건을 순차적으로(약간의 간격을 두고) 처리해서 서버 락 경합을 피함.
-  bulkPassNotInspected: function() {
+  // ★ 2026-07-14 변경 — 미검수 전체를 자동으로 다 처리하던 방식에서, 작업자가
+  //   직접 체크한 것만 선택해서 처리하는 방식으로 변경. 아직 실물 검수가 필요한
+  //   주문은 체크 안 하고 남겨둘 수 있음.
+  updateBulkBar: function() {
+    var total = (S.notInspectedInvoices || []).length;
+    var selected = Object.keys(S.bulkSelected || {}).filter(function(k) { return S.bulkSelected[k]; }).length;
+    var totalEl = $$('bulkTotalCount'), selEl = $$('bulkSelectedCount'), cntEl = $$('bulkPassCount');
+    var btn = $$('bulkPassBtn'), allChk = $$('bulkSelectAllCheck');
+    if (totalEl) totalEl.textContent = total;
+    if (selEl) selEl.textContent = selected;
+    if (cntEl) cntEl.textContent = selected;
+    if (btn) { btn.disabled = selected === 0; btn.style.opacity = selected === 0 ? '0.5' : '1'; }
+    if (allChk) allChk.checked = total > 0 && selected === total;
+  },
+
+  toggleBulkSelect: function(inv, checked) {
+    if (checked) S.bulkSelected[inv] = true;
+    else delete S.bulkSelected[inv];
+    this.updateBulkBar();
+  },
+
+  toggleBulkSelectAll: function(checked) {
+    var list = S.notInspectedInvoices || [];
+    if (checked) list.forEach(function(inv) { S.bulkSelected[inv] = true; });
+    else S.bulkSelected = {};
+    this.render(); // 체크박스 전부 다시 그려서 상태 반영
+    this.updateBulkBar();
+  },
+
+  bulkPassSelected: function() {
     if (!S.me || S.me.trim() === '') {
       alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.\n\n검수 완료 전에 반드시 이름을 선택해주세요.');
       return;
     }
-    var list = (S.notInspectedInvoices || []).slice();
-    if (!list.length) { toast('No pending inspections', 'ok'); return; }
-    if (!confirm('미검수 ' + list.length + '건을 전부 "이상없음(PASS)"으로 처리할까요?\n\n개별적으로 문제가 있는 건은 이 작업 전에 따로 처리해주세요.')) return;
+    var list = Object.keys(S.bulkSelected || {}).filter(function(k) { return S.bulkSelected[k]; });
+    if (!list.length) { toast('선택된 건이 없습니다', 'ok'); return; }
+    if (!confirm('선택한 ' + list.length + '건을 "이상없음(PASS)"으로 처리할까요?')) return;
 
     var btn = $$('bulkPassBtn');
     var total = list.length, done = 0;
@@ -1673,7 +1714,8 @@ var App = {
     function processNext() {
       if (done >= total) {
         btn.disabled = false;
-        toast('✅ ' + total + '건 일괄 PASS 처리 완료', 'ok');
+        toast('✅ ' + total + '건 선택 PASS 처리 완료', 'ok');
+        S.bulkSelected = {};
         App.load();
         return;
       }
