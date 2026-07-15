@@ -1,5 +1,5 @@
 // SK B2B Fulfillment — Service Worker
-const CACHE_NAME = 'sk-worker-v3'; // ★ 2026-07-14: v2→v3
+const CACHE_NAME = 'sk-worker-v7'; // ★ 2026-07-14: v6→v7 (한글 문구 영어로 통일)
 
 // 설치 시 기본 파일 캐시
 self.addEventListener('install', function(event) {
