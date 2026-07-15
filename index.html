@@ -829,6 +829,21 @@ function iConfirm(inv){
   if(nb.length){alert('Please enter at least 5 barcode digits for all issues.');return;}
   var nq=s.issues.filter(function(x){return !x.q||x.q==='0';});
   if(nq.length){alert('Please enter quantity for all issues.');return;}
+
+  // ★ 2026-07-14 신규: 이 카드가 검수완료 처리되면 정렬 규칙상(미검수 위/완료 아래)
+  //   리스트 맨 밑으로 내려가는데, 예전엔 "방금 완료한 카드"로 스크롤을 강제해서
+  //   화면이 맨 밑까지 확 튀는 어지러운 현상이 있었음. 완료 처리 "전" 순서를
+  //   기준으로 바로 다음에 있던(=다음 검수 대상) 카드를 미리 찾아두고, 완료 후엔
+  //   그 카드로 부드럽게 이동해서 작업자가 스크롤 안 하고 바로 이어서 검수 가능.
+  var nextInv = null;
+  var cardEls = document.querySelectorAll('#jlist .jcard');
+  var foundCurrent = false;
+  for (var ci = 0; ci < cardEls.length; ci++) {
+    var cid = cardEls[ci].id.replace('card-', '');
+    if (foundCurrent) { nextInv = cid; break; }
+    if (cid === inv) foundCurrent = true;
+  }
+
   s.done=true; s.dc=false;
   var inspEndAt = new Date().toISOString();
   s.inspEndAt = inspEndAt;
@@ -846,7 +861,14 @@ function iConfirm(inv){
   netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);});
   closeDCModal();
   App.list(); App.kpis();
-  setTimeout(function(){var e=document.getElementById('card-'+inv);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
+  // ★ 2026-07-14 변경: 완료된 카드(맨 아래로 이동함)가 아니라, 다음 검수 대상
+  //   카드로 부드럽게 스크롤. 다음 대상이 없으면(마지막 건이었으면) 스크롤 안 함.
+  setTimeout(function(){
+    if (nextInv) {
+      var ne = document.getElementById('card-' + nextInv);
+      if (ne) ne.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }, 80);
 }
 function iEdit(inv){
   var s = getIS(inv);
