@@ -474,6 +474,13 @@
       </div>
     </div>
   </div>
+  <!-- ★ 2026-07-14 신규: COMPLETED 탭에서 미검수 건이 있을 때만 노출되는 일괄 PASS 처리 버튼 -->
+  <div id="bulkPassBar" style="display:none; padding:10px 14px; background:rgba(245,158,11,0.08); border-bottom:1px solid rgba(245,158,11,0.25);">
+    <button id="bulkPassBtn" onclick="App.bulkPassNotInspected()"
+      style="width:100%; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:800; font-size:14px; cursor:pointer;">
+      ✅ 미검수 <span id="bulkPassCount">0</span>건 한번에 PASS 처리
+    </button>
+  </div>
   <div class="search-bar" id="searchBar" style="display:none">
     <div class="search-wrap">
       <span class="search-icon">&#128269;</span>
@@ -1338,6 +1345,25 @@ var App = {
     }
 
     var notInspCount = Math.max(0, done - checkedCount);
+    // ★ 2026-07-14 신규: 완료됐지만 아직 검수 안 된 인보이스 목록을 모아서
+    //   일괄 PASS 버튼에서 쓸 수 있게 저장
+    var notInspList = [];
+    for (var ni in completedInvoices) {
+      var lst = window.inspState && window.inspState[ni];
+      var srv = serverInspMap[ni] || '';
+      var done2 = (lst && lst.done) || (srv !== '');
+      if (!done2) notInspList.push(ni);
+    }
+    S.notInspectedInvoices = notInspList;
+    var bulkBar = $$('bulkPassBar');
+    if (bulkBar) {
+      if (S.tab === 'done' && notInspList.length > 0) {
+        bulkBar.style.display = 'block';
+        $$('bulkPassCount').textContent = notInspList.length;
+      } else {
+        bulkBar.style.display = 'none';
+      }
+    }
     if (kip) kip.textContent = Math.max(0, j.length - done); // PENDING = 전체 - 완료
     if (kit) kit.textContent = done; // TOTAL = 완료
     if (kiPass) {
@@ -1626,6 +1652,49 @@ var App = {
     netPost({ invoice:inv, endTime:et, endAtISO:eISO, status:'completed' })
       ['catch'](function() { toast('Sync error — check connection', 'err'); });
     setTimeout(function() { self.load(); }, 9000);
+  },
+
+  // ★ 2026-07-14 신규 — COMPLETED 탭에서 작업자가 놓친 미검수 건을 한번에
+  //   "이상없음(PASS)"으로 처리. 개별 iConfirm()과 동일한 저장 형태를 쓰되,
+  //   여러 건을 순차적으로(약간의 간격을 두고) 처리해서 서버 락 경합을 피함.
+  bulkPassNotInspected: function() {
+    if (!S.me || S.me.trim() === '') {
+      alert('⚠️ Please sign in first!\nYou must select your name before completing inspection.\n\n검수 완료 전에 반드시 이름을 선택해주세요.');
+      return;
+    }
+    var list = (S.notInspectedInvoices || []).slice();
+    if (!list.length) { toast('No pending inspections', 'ok'); return; }
+    if (!confirm('미검수 ' + list.length + '건을 전부 "이상없음(PASS)"으로 처리할까요?\n\n개별적으로 문제가 있는 건은 이 작업 전에 따로 처리해주세요.')) return;
+
+    var btn = $$('bulkPassBtn');
+    var total = list.length, done = 0;
+    btn.disabled = true;
+
+    function processNext() {
+      if (done >= total) {
+        btn.disabled = false;
+        toast('✅ ' + total + '건 일괄 PASS 처리 완료', 'ok');
+        App.load();
+        return;
+      }
+      var inv = list[done];
+      btn.textContent = '처리 중... (' + (done + 1) + '/' + total + ')';
+      var nowIso = new Date().toISOString();
+      if (!window.inspState) window.inspState = {};
+      window.inspState[inv] = {dc:false, issues:[], memo:'', done:true, ni:true, inspector:S.me, inspEndAt:nowIso};
+      _saveInspState();
+      var payload = {
+        invoice: inv, pass: true, issues: [], memo: '',
+        inspectedAt: nowIso, inspector: S.me, inspEndAt: nowIso
+      };
+      netPostInspection(payload)
+        ['catch'](function(e) { console.warn('Bulk inspection save error for ' + inv + ':', e); })
+        ['then'](function() {
+          done++;
+          setTimeout(processNext, 350); // GAS 락 경합 방지용 간격
+        });
+    }
+    processNext();
   },
 
   onSearch: function(val) {
