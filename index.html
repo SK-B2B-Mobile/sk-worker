@@ -1350,6 +1350,10 @@ var App = {
         // ★ 서버 inspection 값으로 inspState 동기화 (아이폰 재진입 시 서버 기준 복원)
         S.jobs.forEach(function(job) {
           var inv = job.invoice;
+          // ★ 2026-07-15: 지금 이 오더의 검수 모달을 열어놓고 수정 중이면
+          //   (Edit Inspection 등) 백그라운드 동기화가 방금 추가한 이슈를
+          //   덮어써버리는 사고가 있었음 — 편집 중인 오더는 동기화 스킵.
+          if (inv === _dcModalInv) return;
           var serverVal = String(job.inspection || '').trim();
           if (!serverVal) return;
           var cur = window.inspState[inv];
