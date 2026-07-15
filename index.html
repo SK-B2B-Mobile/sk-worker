@@ -1074,9 +1074,10 @@ var App = {
     clearInterval(S.loginTimer);
     var self = this;
     this.loadStatusOnly();
+    var pollMs = 10000 + Math.floor(Math.random() * 4000); // ★ 2026-07-14: 지터 추가
     S.loginTimer = setInterval(function() {
       if (!S.me) self.loadStatusOnly();
-    }, 10000);
+    }, pollMs);
   },
 
   loadStatusOnly: function() {
@@ -1757,6 +1758,11 @@ var App = {
   startTimers: function() {
     clearInterval(S.timer); clearInterval(S.elTimer);
     var self = this;
+    // ★ 2026-07-14 신규: 여러 작업자가 동시에 이 앱을 쓰면 다들 정확히 같은
+    //   주기로 서버를 두드려서 요청이 몰리는 문제가 있었음(공유 Apps Script가
+    //   느려지는 주된 원인 중 하나). 10초는 다소 잦았던 편이라 15초로 완화하고,
+    //   기기마다 약간씩 다른 타이밍이 되도록 무작위 지터를 추가.
+    var pollMs = 15000 + Math.floor(Math.random() * 5000);
     S.timer = setInterval(function() {
       if (!document.hidden && S.me) {
         // ★ DC 패널(입력 중)이 열려있으면 refresh 스킵 → 입력값 날아가지 않음
@@ -1768,7 +1774,7 @@ var App = {
         }
         if (!dcOpen) self.load();
       }
-    }, 10000);
+    }, pollMs);
     S.elTimer = setInterval(function() {
       for (var i = 0; i < S.jobs.length; i++) {
         var job = S.jobs[i];
