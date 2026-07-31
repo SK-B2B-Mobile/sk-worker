@@ -491,7 +491,7 @@
   <div class="search-bar" id="searchBar" style="display:none">
     <div class="search-wrap">
       <span class="search-icon">&#128269;</span>
-      <input class="search-input" id="searchInput" type="text" placeholder="Search invoice #, remarks, picker..."
+      <input class="search-input" id="searchInput" type="text" placeholder="Search invoice #, remarks, picker, inspector, date/time..."
              oninput="App.onSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
       <span class="search-clear" id="searchClear" onclick="App.clearSearch()">&#10005;</span>
     </div>
@@ -1549,9 +1549,19 @@ var App = {
       var filtered = [];
       for (var k = 0; k < f.length; k++) {
         var job = f[k];
+        // ★ 2026-07-30 신규 — 인보이스/고객명/피커(작업자)만 검색되던 걸,
+        //   검수담당자·출고예정일·작업 시작/종료 시각·검수완료 시각까지 확장.
+        //   Date 객체로 들어올 수도 있는 필드들은 String()으로 안전하게 문자열화.
         if ((job.invoice || '').toLowerCase().indexOf(q) >= 0 ||
             (job.remarks || '').toLowerCase().indexOf(q) >= 0 ||
-            (job.picker  || '').toLowerCase().indexOf(q) >= 0) {
+            (job.picker  || '').toLowerCase().indexOf(q) >= 0 ||
+            String(job.inspector || '').toLowerCase().indexOf(q) >= 0 ||
+            String(job.shipDate || '').toLowerCase().indexOf(q) >= 0 ||
+            String(job.startTime || '').toLowerCase().indexOf(q) >= 0 ||
+            String(job.endTime || '').toLowerCase().indexOf(q) >= 0 ||
+            String(job.startAtISO || '').toLowerCase().indexOf(q) >= 0 ||
+            String(job.endAtISO || '').toLowerCase().indexOf(q) >= 0 ||
+            String(job.inspEnd || job['Insp. End'] || '').toLowerCase().indexOf(q) >= 0) {
           filtered.push(job);
         }
       }
