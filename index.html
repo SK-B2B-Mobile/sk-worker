@@ -1824,8 +1824,15 @@ var App = {
     }
     var list = Object.keys(S.bulkSelected || {}).filter(function(k) { return S.bulkSelected[k]; });
     if (!list.length) { toast('No items selected', 'ok'); return; }
-    if (!confirm('Mark ' + list.length + ' selected item(s) as "No Issues (PASS)"?')) return;
+    // ★ 2026-08-12 변경(매니저 요청) — 예전엔 "Mark N selected as PASS?" 한 줄짜리
+    //   confirm()만 누르면 바로 처리됐음. 실제로 뭘 통과시키는지 안 보고 습관적으로
+    //   확인을 눌러버려서, 실물 검수 없이 여러 건이 한번에 PASS 처리되는 사고가 있었음
+    //   (8/11 16:18:37, 6건 동시 PASS — Insp. End 완전 동일 타임스탬프로 확인됨).
+    //   이제 대상 Invoice 목록을 직접 보여주고, "확인했습니다" 체크를 해야만 실행됨.
+    openBulkConfirmModal(list);
+  },
 
+  _executeBulkPass: function(list) {
     var btn = $$('bulkPassBtn');
     btn.disabled = true;
     btn.textContent = 'Processing... (sending ' + list.length + ' items)';
@@ -2150,6 +2157,56 @@ function mobConfirmStart(inv){
 }
 function mobConfirmComplete(inv){
   showMobModal('&#10003;','Mark this job as complete?','Current time will be automatically recorded as the End Time.','#059669',function(){ App.complete(inv); });
+}
+</script>
+
+<!-- ★ 2026-08-12 신규(매니저 요청) — 일괄 PASS 확인 모달. 대상 Invoice 번호를
+     직접 보여주고, "확인했습니다" 체크를 해야만 실행 버튼이 활성화됨. -->
+<div id="bulkConfirmModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.78);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#111d35;border:1px solid #22d3ee;border-radius:16px;padding:22px;min-width:270px;max-width:360px;margin:0 16px;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">이 <span id="bcCount">0</span>건을 정말 PASS 처리할까요?</div>
+    <div style="font-size:12px;color:#7a93b8;margin-bottom:12px;">아래 목록을 직접 확인한 뒤 체크해주세요.</div>
+    <div id="bcList" style="overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1;"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#e2e8f0;margin-bottom:14px;cursor:pointer;">
+      <input type="checkbox" id="bcConfirmChk" onchange="bcToggleConfirm(this.checked)" style="width:20px;height:20px;flex-shrink:0;cursor:pointer;">
+      <span>이 <span id="bcCount2">0</span>건을 실제로 확인했습니다</span>
+    </label>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeBulkConfirmModal()" style="flex:1;padding:11px;border-radius:9px;border:1px solid #1e3550;background:transparent;color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;">취소</button>
+      <button id="bcExecBtn" disabled onclick="bcExecute()" style="flex:1;padding:11px;border-radius:9px;border:none;color:#052e1e;font-size:13px;font-weight:700;background:#10b981;cursor:pointer;opacity:0.4;">✓ 확인, PASS 처리</button>
+    </div>
+  </div>
+</div>
+<script>
+var _bcList = [];
+function openBulkConfirmModal(list){
+  _bcList = list;
+  document.getElementById('bcCount').textContent = list.length;
+  document.getElementById('bcCount2').textContent = list.length;
+  var wrap = document.getElementById('bcList');
+  wrap.innerHTML = list.map(function(inv){
+    return '<div style="background:#0a1628;border-radius:7px;padding:8px 10px;font-family:monospace;font-size:12px;color:#e2e8f0;">' + inv + '</div>';
+  }).join('');
+  var chk = document.getElementById('bcConfirmChk');
+  chk.checked = false;
+  var btn = document.getElementById('bcExecBtn');
+  btn.disabled = true; btn.style.opacity = '0.4';
+  var m = document.getElementById('bulkConfirmModal');
+  m.style.display = '-webkit-flex';
+  m.style.display = 'flex';
+}
+function closeBulkConfirmModal(){
+  document.getElementById('bulkConfirmModal').style.display = 'none';
+}
+function bcToggleConfirm(checked){
+  var btn = document.getElementById('bcExecBtn');
+  btn.disabled = !checked;
+  btn.style.opacity = checked ? '1' : '0.4';
+}
+function bcExecute(){
+  var list = _bcList;
+  closeBulkConfirmModal();
+  App._executeBulkPass(list);
 }
 </script>
 <!-- ★ DC 모달 오버레이 -->
