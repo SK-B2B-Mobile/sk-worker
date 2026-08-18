@@ -638,7 +638,10 @@ function netPostInspectionBulk(dataList) {
       var t = setTimeout(function() { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
       x.open('POST', GAS, true);
       x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:true}); } };
+      // ★ 2026-08-18 수정 — 응답이 왔지만 유효한 JSON이 아니면(예: GAS 에러
+      //   페이지) 예전엔 무조건 성공(ok:true)으로 잘못 간주했음. 실제로는
+      //   저장이 안 됐을 수도 있으므로 실패(ok:false)로 정확히 처리.
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:false, error:'invalid response (status '+x.status+')'}); } };
       x.onerror = function() { clearTimeout(t); rej(new Error('network')); };
       x.onabort = function() { clearTimeout(t); rej(new Error('aborted')); };
       x.send(body);
@@ -678,7 +681,11 @@ function netPostInspection(data) {
       var t = setTimeout(function() { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
       x.open('POST', GAS, true);
       x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:true}); } };
+      // ★ 2026-08-18 수정 — 응답이 왔지만 유효한 JSON이 아니면(예: GAS 에러
+      //   페이지) 예전엔 무조건 성공(ok:true)으로 잘못 간주했음. 실제로는
+      //   저장이 안 됐을 수도 있으므로 실패(ok:false)로 정확히 처리.
+      //   (iConfirm()이 이 res.ok 값을 보고 성공/실패를 판단하므로 중요함)
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:false, error:'invalid response (status '+x.status+')'}); } };
       x.onerror = function() { clearTimeout(t); rej(new Error('network')); };
       x.onabort = function() { clearTimeout(t); rej(new Error('aborted')); };
       x.send(body);
@@ -702,7 +709,8 @@ function netClearInspection(data) {
       var t = setTimeout(function() { x.abort(); rej(new Error('timeout')); }, TIMEOUT);
       x.open('POST', GAS, true);
       x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:true}); } };
+      // ★ 2026-08-18 수정 — 동일한 이유로 실패(ok:false)로 정확히 처리
+      x.onload = function() { clearTimeout(t); try { res(JSON.parse(x.responseText)); } catch(e) { res({ok:false, error:'invalid response (status '+x.status+')'}); } };
       x.onerror = function() { clearTimeout(t); rej(new Error('network')); };
       x.send(body);
     });
@@ -898,6 +906,8 @@ function iConfirm(inv){
   var nq=s.issues.filter(function(x){return !x.q||x.q==='0';});
   if(nq.length){toast('⚠️ Enter quantity for all issues', 'err');return;}
 
+  // ★ 2026-08-18 신규 — 실패 시 되돌리기 위해, 손대기 전 상태를 스냅샷으로 보관
+  var prevState = JSON.parse(JSON.stringify(s));
   s.done=true; s.dc=false;
   var inspEndAt = new Date().toISOString();
   s.inspEndAt = inspEndAt;
@@ -914,20 +924,30 @@ function iConfirm(inv){
   };
   closeDCModal();
 
-  // ★ 2026-07-14 재수정 — 작업자가 여러 명이라, "다음 검수 대상"을 내 폰에
-  //   저장된(최대 15~20초 지연될 수 있는) 로컬 목록으로 정하면, 다른 작업자가
-  //   방금 처리한 오더를 모르고 똑같이 그 오더로 자동으로 넘어가는 사고가 날 수
-  //   있었음(두 명이 같은 오더를 동시에 검수하게 됨). 그래서 내 검수 결과를
-  //   서버에 저장한 "직후" 서버에서 최신 목록을 다시 받아온 뒤, 그 최신 데이터
-  //   기준으로 다음 대상을 정함 — 다른 작업자가 그 사이 이미 처리한 오더는
-  //   최신 목록에 "검수완료"로 반영되어 있어서 자동으로 건너뛰어짐.
-  netPostInspection(payload)['catch'](function(e){console.warn('Inspection save error:',e);})['then'](function(){
-    App.load()['then'](function(){
-      // ★ 2026-07-15: 완료 후 자동으로 다음 오더 모달을 여는 대신, 목록으로
-      //   돌아가서 작업자가 실제 손에 든 물건에 맞는 오더를 직접 선택하도록 변경.
-      //   동시성 보호(선점)는 카드를 직접 눌러 열 때 openDCModal()에서 그대로 적용됨.
-      toast('✅ Inspection completed', 'ok');
-    });
+  // ★ 2026-08-18 수정 — 예전엔 "서버 저장" + "전체 오더 목록(수백 건) 재조회"를
+  //   순서대로 다 기다린 뒤에야 "완료" 토스트가 떴음(체감 대기시간이 김).
+  //   목록 재조회는 다른 작업자의 중복 검수를 막기 위한 것(★ 2026-07-14 참고)일
+  //   뿐 사용자에게 보여줄 필요는 없는 작업이라, 저장이 성공하면 그 즉시
+  //   완료를 알리고 목록 재조회는 화면 뒤에서 계속 진행하도록 분리함 —
+  //   중복 검수 방지 효과는 그대로 유지하면서 체감 대기시간만 절반으로 줄어듦.
+  //
+  //   또한 예전엔 저장이 실패해도 .catch()가 에러를 조용히 삼키고 그냥
+  //   "완료" 토스트를 띄웠음(작업자는 성공한 줄 알지만 서버엔 저장 안 된
+  //   상태) — 이제 res.ok로 실제 성공 여부를 확인하고, 실패하면 로컬 상태를
+  //   되돌려서(다시 검수 대상으로 남김) 실패를 명확히 알림.
+  netPostInspection(payload).then(function(res){
+    if(!res || res.ok !== true){
+      throw new Error((res && res.error) || 'save failed');
+    }
+    toast('✅ Inspection completed', 'ok');
+    // 목록 재조회(중복 검수 방지용)는 백그라운드로 — 완료 토스트를 막지 않음
+    App.load()['catch'](function(e){ console.warn('Background list refresh failed:', e); });
+  })['catch'](function(e){
+    console.warn('Inspection save error:', e);
+    window.inspState[inv] = prevState; // 실패했으니 로컬 상태 되돌려서 다시 검수 대상으로 남김
+    _saveInspState();
+    if (App.render) App.render();
+    toast('⚠️ Save failed — please try again', 'err');
   });
 }
 function iEdit(inv){
