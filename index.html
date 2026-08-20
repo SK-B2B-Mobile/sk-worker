@@ -1385,6 +1385,24 @@ var App = {
           }
         });
         _saveInspState(); // ★ 동기화 후 localStorage에 저장
+        // ★ 2026-08-19 신규(긴급) — 다음에 서버가 안 될 때 대신 보여줄 수 있게 저장
+        try { localStorage.setItem('sk_jobs_cache', JSON.stringify({ jobs: S.jobs.slice(0, 500), savedAt: Date.now() })); } catch(e) {}
+      } else if (!S.jobs.length) {
+        // ★ 2026-08-19 신규(긴급) — 방금 앱을 열었는데 하필 서버가 혼잡해서
+        //   listJobs가 실패하면(fetch+XHR+JSONP 다 실패해도 netGet은 {}를
+        //   반환하도록 돼 있어 여기로 옴) 기댈 데이터가 없어 전부 0으로
+        //   보였음. localStorage의 마지막 성공 데이터라도 대신 보여줌.
+        try {
+          var raw = localStorage.getItem('sk_jobs_cache');
+          if (raw) {
+            var cached = JSON.parse(raw);
+            if (cached && cached.jobs && cached.jobs.length) {
+              S.jobs = cached.jobs;
+              var ageMin = Math.round((Date.now() - cached.savedAt) / 60000);
+              console.warn('서버 연결 실패 — ' + ageMin + '분 전 데이터로 표시');
+            }
+          }
+        } catch(e) {}
       }
       self.render();
       setSyn('ok');
