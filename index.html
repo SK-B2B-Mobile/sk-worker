@@ -88,6 +88,7 @@
       bottom:calc(env(safe-area-inset-bottom, 20px) + 68px);
       -webkit-transform:translateX(-50%) translateY(48px);
       transform:translateX(-50%) translateY(48px);
+      opacity:0;
       padding:11px 24px;
       background:#111f35;
       border:1px solid #1a2d48;
@@ -97,11 +98,11 @@
       white-space:nowrap;
       z-index:9998;
       pointer-events:none;
-      -webkit-transition:-webkit-transform .32s cubic-bezier(.34,1.56,.64,1);
-      transition:transform .32s cubic-bezier(.34,1.56,.64,1);
+      -webkit-transition:-webkit-transform .32s cubic-bezier(.34,1.56,.64,1), opacity .32s ease;
+      transition:transform .32s cubic-bezier(.34,1.56,.64,1), opacity .32s ease;
       box-shadow:0 8px 28px rgba(0,0,0,.5);
     }
-    #toast.show { -webkit-transform:translateX(-50%) translateY(0); transform:translateX(-50%) translateY(0); }
+    #toast.show { -webkit-transform:translateX(-50%) translateY(0); transform:translateX(-50%) translateY(0); opacity:1; }
     #toast.ok { color:#00e676; border-color:rgba(0,230,118,.35); }
     #toast.err { color:#ff4d6d; border-color:rgba(255,77,109,.35); }
 
