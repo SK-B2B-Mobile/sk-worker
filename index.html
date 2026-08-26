@@ -942,8 +942,15 @@ function iConfirm(inv){
       throw new Error((res && res.error) || 'save failed');
     }
     toast('✅ Inspection completed', 'ok');
-    // 목록 재조회(중복 검수 방지용)는 백그라운드로 — 완료 토스트를 막지 않음
-    App.load()['catch'](function(e){ console.warn('Background list refresh failed:', e); });
+    // ★ 2026-08-26 신규(버그 수정) — 예전엔 저장 성공 즉시 목록 재조회를 쐈는데,
+    //   그 순간 서버가 방금 저장 요청을 정리하는 중이라(구글 앱스스크립트 동시
+    //   요청 한도) 재조회만 타이밍이 겹쳐서 실패하고 "Connection error"가
+    //   떴었음(저장 자체는 이미 성공한 뒤라 데이터 손실은 없었지만, 작업자가
+    //   "혹시 저장 안 됐나?"라고 오해할 수 있어 불필요하게 불안했음). 아주 짧게
+    //   (0.8초) 텀을 둬서 서버가 정리될 시간을 준 뒤 재조회하도록 함.
+    setTimeout(function(){
+      App.load()['catch'](function(e){ console.warn('Background list refresh failed:', e); });
+    }, 800);
   })['catch'](function(e){
     console.warn('Inspection save error:', e);
     window.inspState[inv] = prevState; // 실패했으니 로컬 상태 되돌려서 다시 검수 대상으로 남김
@@ -1896,7 +1903,8 @@ var App = {
         console.warn('Bulk inspection save error:', res && res.error);
       }
       S.bulkSelected = {};
-      App.load();
+      // ★ 2026-08-26 신규(버그 수정) — 위 iConfirm과 같은 이유로 짧은 텀을 둠
+      setTimeout(function(){ App.load(); }, 800);
     })['catch'](function(e) {
       btn.disabled = false;
       toast('⚠ Save failed — please try again', 'err');
