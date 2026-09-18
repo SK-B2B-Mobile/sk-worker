@@ -517,6 +517,40 @@ var WORK_SEGMENTS = [
   { start: 13*60,    end: 17*60+30  }
 ];
 
+/* ★ 2026-09-18 세션B 신규 — calcWorkingMins가 주말·공휴일을 전혀 안 뺀 채 모든 날짜의
+ 근무시간대를 그대로 더하고 있던 버그 수정. BatchPicking.gs의 calcWorkMinutes_와 완전히
+ 동일한 11개 공휴일 알고리즘을 그대로 옮겨옴(자바스크립트 파일이 서로 달라 코드를 직접
+ 공유할 순 없지만, 계산 결과·로직은 이제 시스템 전체에서 동일함 — 세션B "단일 진실
+ 공급원" 원칙). 이 함수는 화면 표시(⏱ Work Elapsed 배지)에만 쓰이고 Jobs 시트에 실제
+ 저장되는 값이 아니므로, 과거 데이터를 다시 계산할 필요는 없음 — 오늘부터 화면에 보이는
+ 숫자만 정확해짐. */
+function nthWeekdayOfMonth_(year, month, weekday, n) {
+  var firstWeekday = new Date(year, month, 1).getDay();
+  return 1 + ((7 + weekday - firstWeekday) % 7) + (n - 1) * 7;
+}
+function lastWeekdayOfMonth_(year, month, weekday) {
+  var last = new Date(year, month + 1, 0);
+  return last.getDate() - ((7 + last.getDay() - weekday) % 7);
+}
+function isUsFederalHoliday_(dateObj) {
+  var y = dateObj.getFullYear(), mo = dateObj.getMonth(), d = dateObj.getDate();
+  var holidays = [
+    [0, 1],                                     // 신년 1/1
+    [0, nthWeekdayOfMonth_(y, 0, 1, 3)],         // MLK: 1월 셋째 월
+    [1, nthWeekdayOfMonth_(y, 1, 1, 3)],         // 대통령의날: 2월 셋째 월
+    [4, lastWeekdayOfMonth_(y, 4, 1)],           // 메모리얼데이: 5월 마지막 월
+    [5, 19],                                     // 준틴틴 6/19
+    [6, 4],                                      // 독립기념일 7/4
+    [8, nthWeekdayOfMonth_(y, 8, 1, 1)],         // 노동절: 9월 첫째 월
+    [9, nthWeekdayOfMonth_(y, 9, 1, 2)],         // 콜럼버스데이: 10월 둘째 월
+    [10, 11],                                    // 베테랑데이 11/11
+    [10, nthWeekdayOfMonth_(y, 10, 4, 4)],       // 추수감사절: 11월 넷째 목
+    [11, 25]                                     // 크리스마스 12/25
+  ];
+  for (var i = 0; i < holidays.length; i++) { if (holidays[i][0] === mo && holidays[i][1] === d) return true; }
+  return false;
+}
+
 function calcWorkingMins(startISO, endISO) {
   try {
     var start = new Date(startISO);
@@ -533,11 +567,15 @@ function calcWorkingMins(startISO, endISO) {
       var rangeEnd   = end < nextDay ? end : nextDay;
       var fromMins = (rangeStart - dayBase) / 60000;
       var toMins   = (rangeEnd   - dayBase) / 60000;
-      for (var i = 0; i < WORK_SEGMENTS.length; i++) {
-        var seg = WORK_SEGMENTS[i];
-        var oStart = fromMins > seg.start ? fromMins : seg.start;
-        var oEnd   = toMins   < seg.end   ? toMins   : seg.end;
-        if (oEnd > oStart) totalMins += (oEnd - oStart);
+      // ★ 2026-09-18 세션B 신규 — 토(6)/일(0)과 미국 연방공휴일이면 이 날은 근무시간 0으로 건너뜀
+      var dow = dayBase.getDay();
+      if (dow !== 0 && dow !== 6 && !isUsFederalHoliday_(dayBase)) {
+        for (var i = 0; i < WORK_SEGMENTS.length; i++) {
+          var seg = WORK_SEGMENTS[i];
+          var oStart = fromMins > seg.start ? fromMins : seg.start;
+          var oEnd   = toMins   < seg.end   ? toMins   : seg.end;
+          if (oEnd > oStart) totalMins += (oEnd - oStart);
+        }
       }
       cur = nextDay;
       dayCount++;
