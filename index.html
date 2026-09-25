@@ -507,6 +507,53 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     ★ 2026-09-25 신규(실시간화 Phase 1) — Firestore 미러 구독
+     ------------------------------------------------------------
+     board.html/batch.html/sales.html과 완전히 동일한 패턴. 이 페이지가
+     원래 하던 listJobs 직접 호출(15~20초 폴링) "로직" 자체는 전혀 안 바꿈.
+     Apps Script(FirestoreSync.gs)가 (a) 이 목록을 바꾸는 쓰기 직후 즉시,
+     그리고 (b) 1분마다 안전망으로 — 결과를 Firestore mirror/workerJobs
+     문서에 그대로 복사해두고, 이 페이지는 그 문서를 실시간 구독(onSnapshot)
+     만 함. 구독 실패/미연결 시 기존 폴링으로 100% 그대로 동작(자동 폴백).
+     ═══════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBG4HmlCg4CoJPoCbOi-ZE6wQwY2u88XeA",
+    authDomain: "sk-b2b-fulfillment.firebaseapp.com",
+    projectId: "sk-b2b-fulfillment",
+    storageBucket: "sk-b2b-fulfillment.firebasestorage.app",
+    messagingSenderId: "1053449174138",
+    appId: "1:1053449174138:web:d1f81b0c05abe6fcf4cfc3",
+    measurementId: "G-QBTQ1E86Y6"
+  };
+
+  try {
+    const fbApp = initializeApp(firebaseConfig);
+    const db = getFirestore(fbApp);
+
+    window._subscribeMirror = function(docPath, onUpdate){
+      const ref = doc(db, 'mirror', docPath);
+      return onSnapshot(ref, (snap) => {
+        if(!snap.exists()) return;
+        try{
+          const payload = JSON.parse(snap.data().data);
+          onUpdate(payload);
+        }catch(e){ console.error('[mirror] JSON 파싱 실패 (' + docPath + '):', e); }
+      }, (err) => {
+        console.error('[mirror] onSnapshot 에러 (' + docPath + '):', err);
+      });
+    };
+
+    console.log('✅ Firestore 미러 연결 준비 완료 (sk-worker)');
+  } catch(e) {
+    console.error('❌ Firestore 초기화 실패 — 기존 방식(폴링)으로 계속 동작합니다:', e);
+  }
+</script>
+
 <script>
 var GAS = 'https://script.google.com/macros/s/AKfycbykK9DWjem9ORHxfR_mpdZl5DVh-en0D6JpCdIuel305QmfqxoNU_NqSnjkhFk401hI/exec';
 var FB_PICK = ['Ryan','Jane','Henry','Nicole'];
@@ -1162,6 +1209,97 @@ var S = {
   searchQuery:'', openCards:{}, workerStatus:{}, bulkSelected:{}, notInspectedInvoices:[]
 };
 
+// ★ 2026-09-25 신규(실시간화 Phase 1) — listJobs 응답(d)을 화면 state(S)에 반영하는
+//   부분을 App.load()에서 분리. 직접 폴링(App.load)과 Firestore 미러 구독(아래
+//   subscribeWorkerJobsMirror_) 양쪽에서 동일하게 재사용하기 위함 — batch.html의
+//   applyScanStateRes와 같은 방식. 반영 로직 자체는 기존 load() 안에 있던 코드와
+//   완전히 동일, 한 글자도 안 바꿈.
+function applyJobsListRes_(d) {
+  if (d && d.ok) {
+    var pendingPickers = {};
+    for (var pi = 0; pi < S.jobs.length; pi++) {
+      var pj = S.jobs[pi];
+      if (pj.picker && (pj.status||'').toLowerCase() === 'ready') pendingPickers[pj.invoice] = pj.picker;
+    }
+    S.jobs = d.jobs || [];
+    for (var ri = 0; ri < S.jobs.length; ri++) {
+      if (!S.jobs[ri].picker && pendingPickers[S.jobs[ri].invoice]) S.jobs[ri].picker = pendingPickers[S.jobs[ri].invoice];
+    }
+    if (Array.isArray(d.pickers) && d.pickers.length) S.pickers = d.pickers;
+    S.colors = d.pickerColors || S.colors;
+    if (window.CelebrationSystem) window.CelebrationSystem.syncFromJobs(S.jobs);
+
+    // ★ 서버 inspection 값으로 inspState 동기화 (아이폰 재진입 시 서버 기준 복원)
+    S.jobs.forEach(function(job) {
+      var inv = job.invoice;
+      // ★ 2026-07-15: 지금 이 오더의 검수 모달을 열어놓고 수정 중이면
+      //   (Edit Inspection 등) 백그라운드 동기화가 방금 추가한 이슈를
+      //   덮어써버리는 사고가 있었음 — 편집 중인 오더는 동기화 스킵.
+      if (inv === _dcModalInv) return;
+      var serverVal = String(job.inspection || '').trim();
+      if (!serverVal) return;
+      var cur = window.inspState[inv];
+      if (cur && cur.done) return; // 로컬에 이미 done이면 유지
+      if (serverVal.indexOf('PASS') >= 0) {
+        window.inspState[inv] = {dc:false, issues:[], memo:'', done:true, ni:true};
+      } else if (serverVal.indexOf('ISSUES') >= 0) {
+        window.inspState[inv] = {dc:false, issues:[], memo:'', done:true, ni:false};
+      }
+    });
+    _saveInspState(); // ★ 동기화 후 localStorage에 저장
+    // ★ 2026-08-19 신규(긴급) — 다음에 서버가 안 될 때 대신 보여줄 수 있게 저장
+    try { localStorage.setItem('sk_jobs_cache', JSON.stringify({ jobs: S.jobs.slice(0, 500), savedAt: Date.now() })); } catch(e) {}
+  } else if (!S.jobs.length) {
+    // ★ 2026-08-19 신규(긴급) — 방금 앱을 열었는데 하필 서버가 혼잡해서
+    //   listJobs가 실패하면(fetch+XHR+JSONP 다 실패해도 netGet은 {}를
+    //   반환하도록 돼 있어 여기로 옴) 기댈 데이터가 없어 전부 0으로
+    //   보였음. localStorage의 마지막 성공 데이터라도 대신 보여줌.
+    try {
+      var raw = localStorage.getItem('sk_jobs_cache');
+      if (raw) {
+        var cached = JSON.parse(raw);
+        if (cached && cached.jobs && cached.jobs.length) {
+          S.jobs = cached.jobs;
+          var ageMin = Math.round((Date.now() - cached.savedAt) / 60000);
+          console.warn('서버 연결 실패 — ' + ageMin + '분 전 데이터로 표시');
+        }
+      }
+    } catch(e) {}
+  }
+}
+
+// ★ 2026-09-25 신규(실시간화 Phase 1) — mirror/workerJobs 구독. 방금 이 기기가
+//   직접 확인한(App.load 성공) 값이 있으면 그 뒤 짧은 시간 동안은 미러 푸시를
+//   건너뛴다 — board.html/batch.html의 "70초 신뢰 구간" 가드와 동일한 원칙
+//   (구독 시작 직후 onSnapshot이 밀어주는 값이 방금 받은 직접 응답보다 오래됐을
+//   가능성 때문에 생기는 "깜빡였다 되돌아옴" 방지). 이 페이지는 mirror가 쓰기
+//   시점마다(write-through) 갱신되므로 최대 1분씩 오래되진 않지만, 그래도
+//   순서가 뒤집힐 수 있는 네트워크 레이스는 남아있어 짧게(10초)만 가드한다.
+var _lastTrustedJobsDataAt = 0;
+var _workerJobsMirrorUnsub = null;
+function subscribeWorkerJobsMirror_() {
+  if (!window._subscribeMirror || _workerJobsMirrorUnsub) return; // 이미 연결 안 됐거나 이미 구독 중
+  _workerJobsMirrorUnsub = window._subscribeMirror('workerJobs', function(payload) {
+    if (!S.me) return; // 로그인 전(피커 선택 화면)에는 적용 안 함 — 기존 loadStatusOnly 폴링만 사용
+    if ((Date.now() - _lastTrustedJobsDataAt) < 10000) {
+      console.log('[mirror] 최근(10초 이내) 직접 확인한 목록이 있어 미러 푸시를 건너뜀');
+      return;
+    }
+    // ★ DC 패널(입력 중)이 열려있으면 반영 스킵 — startTimers의 15~20초 폴링과 동일한 안전장치
+    var dcOpen = false;
+    if (window.inspState) {
+      for (var iv in window.inspState) { if (window.inspState[iv].dc) { dcOpen = true; break; } }
+    }
+    if (dcOpen) return;
+    applyJobsListRes_(payload);
+    if (typeof App !== 'undefined' && App.render) App.render();
+  });
+  console.log('✅ Firestore 미러 구독 시작 (sk-worker) — listJobs 실시간 보강');
+}
+function stopWorkerJobsMirrorSub_() {
+  if (_workerJobsMirrorUnsub) { try { _workerJobsMirrorUnsub(); } catch(e) {} _workerJobsMirrorUnsub = null; }
+}
+
 function $$(id) { return document.getElementById(id); }
 
 function showPage(id) {
@@ -1383,11 +1521,13 @@ var App = {
     $$('topName').textContent = S.me;
     this.startTimers();
     this.load();
+    subscribeWorkerJobsMirror_(); // ★ 2026-09-25 신규 — 로그인 후에만 실시간 미러 구독 시작
   },
 
   logout: function() {
     LS.del('sk_worker');
     clearInterval(S.timer); clearInterval(S.elTimer);
+    stopWorkerJobsMirrorSub_(); // ★ 2026-09-25 신규 — 로그아웃 시 미러 구독 해지(리스너 누수 방지)
     S.me = null; S.jobs = [];
     var btns = document.querySelectorAll('.pc');
     for (var i = 0; i < btns.length; i++) btns[i].classList.remove('sel');
@@ -1400,57 +1540,8 @@ var App = {
     setSyn('busy');
     var self = this;
     return netGet(GAS + '?op=listJobs&t=' + Date.now()).then(function(d) {
-      if (d && d.ok) {
-        var pendingPickers = {};
-        for (var pi = 0; pi < S.jobs.length; pi++) {
-          var pj = S.jobs[pi];
-          if (pj.picker && (pj.status||'').toLowerCase() === 'ready') pendingPickers[pj.invoice] = pj.picker;
-        }
-        S.jobs = d.jobs || [];
-        for (var ri = 0; ri < S.jobs.length; ri++) {
-          if (!S.jobs[ri].picker && pendingPickers[S.jobs[ri].invoice]) S.jobs[ri].picker = pendingPickers[S.jobs[ri].invoice];
-        }
-        if (Array.isArray(d.pickers) && d.pickers.length) S.pickers = d.pickers;
-        S.colors = d.pickerColors || S.colors;
-        if (window.CelebrationSystem) window.CelebrationSystem.syncFromJobs(S.jobs);
-
-        // ★ 서버 inspection 값으로 inspState 동기화 (아이폰 재진입 시 서버 기준 복원)
-        S.jobs.forEach(function(job) {
-          var inv = job.invoice;
-          // ★ 2026-07-15: 지금 이 오더의 검수 모달을 열어놓고 수정 중이면
-          //   (Edit Inspection 등) 백그라운드 동기화가 방금 추가한 이슈를
-          //   덮어써버리는 사고가 있었음 — 편집 중인 오더는 동기화 스킵.
-          if (inv === _dcModalInv) return;
-          var serverVal = String(job.inspection || '').trim();
-          if (!serverVal) return;
-          var cur = window.inspState[inv];
-          if (cur && cur.done) return; // 로컬에 이미 done이면 유지
-          if (serverVal.indexOf('PASS') >= 0) {
-            window.inspState[inv] = {dc:false, issues:[], memo:'', done:true, ni:true};
-          } else if (serverVal.indexOf('ISSUES') >= 0) {
-            window.inspState[inv] = {dc:false, issues:[], memo:'', done:true, ni:false};
-          }
-        });
-        _saveInspState(); // ★ 동기화 후 localStorage에 저장
-        // ★ 2026-08-19 신규(긴급) — 다음에 서버가 안 될 때 대신 보여줄 수 있게 저장
-        try { localStorage.setItem('sk_jobs_cache', JSON.stringify({ jobs: S.jobs.slice(0, 500), savedAt: Date.now() })); } catch(e) {}
-      } else if (!S.jobs.length) {
-        // ★ 2026-08-19 신규(긴급) — 방금 앱을 열었는데 하필 서버가 혼잡해서
-        //   listJobs가 실패하면(fetch+XHR+JSONP 다 실패해도 netGet은 {}를
-        //   반환하도록 돼 있어 여기로 옴) 기댈 데이터가 없어 전부 0으로
-        //   보였음. localStorage의 마지막 성공 데이터라도 대신 보여줌.
-        try {
-          var raw = localStorage.getItem('sk_jobs_cache');
-          if (raw) {
-            var cached = JSON.parse(raw);
-            if (cached && cached.jobs && cached.jobs.length) {
-              S.jobs = cached.jobs;
-              var ageMin = Math.round((Date.now() - cached.savedAt) / 60000);
-              console.warn('서버 연결 실패 — ' + ageMin + '분 전 데이터로 표시');
-            }
-          }
-        } catch(e) {}
-      }
+      _lastTrustedJobsDataAt = Date.now(); // ★ 2026-09-25 — 방금 직접 확인한 최신 값(미러 구독 가드용)
+      applyJobsListRes_(d);
       self.render();
       setSyn('ok');
     })['catch'](function(e) {
